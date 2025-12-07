@@ -52,9 +52,9 @@ class DecisionOrchestrator:
                 "event_id": request.event_id,
                 "amount": request.amount,
                 "currency": request.currency,
-                "merchant": request.merchant.dict(),
-                "card": request.card.dict(),
-                "context": request.context.dict()
+                "merchant": request.merchant.dict(exclude_none=True),
+                "card": request.card.dict(exclude_none=True),
+                "context": request.context.dict(exclude_none=True)
             }
             
             response = await self.http_client.post(
@@ -98,9 +98,9 @@ class DecisionOrchestrator:
                 "tenant_id": request.tenant_id,
                 "amount": request.amount,
                 "currency": request.currency,
-                "merchant": request.merchant.dict(),
-                "card": request.card.dict(),
-                "context": request.context.dict()
+                "merchant": request.merchant.dict(exclude_none=True),
+                "card": request.card.dict(exclude_none=True),
+                "context": request.context.dict(exclude_none=True)
             }
             
             response = await self.http_client.post(

@@ -3,19 +3,18 @@ import time
 import logging
 from contextlib import asynccontextmanager
 from typing import Dict
+from datetime import datetime
 
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from prometheus_client import generate_latest, CONTENT_TYPE_LATEST, Counter, Histogram
-from fastapi.responses import Response
 
 from .config import settings
 from .models import (
     PredictionRequest,
     PredictionResponse,
     HealthResponse,
-    ErrorResponse,
-    TransactionFeatures
+    ErrorResponse
 )
 from .inference import model_inference
 
@@ -26,7 +25,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Additional metrics
+# Metrics
 REQUEST_COUNTER = Counter(
     'http_requests_total',
     'Total HTTP requests',
@@ -39,31 +38,26 @@ REQUEST_LATENCY = Histogram(
     ['method', 'endpoint']
 )
 
-# Track service start time
 SERVICE_START_TIME = time.time()
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan manager."""
-    # Startup
     logger.info("Starting FraudGuard Model Serving service")
     logger.info(f"Model path: {settings.model_path}")
-    
+
     try:
         model_inference.load_model()
         logger.info("Model loaded successfully")
     except Exception as e:
         logger.error(f"Failed to load model during startup: {e}")
-        # Continue running to allow health checks to report the error
-    
+
     yield
-    
-    # Shutdown
+
     logger.info("Shutting down FraudGuard Model Serving service")
 
 
-# Create FastAPI app
 app = FastAPI(
     title="FraudGuard AI - Model Serving",
     description="Real-time fraud detection model inference API",
@@ -76,18 +70,16 @@ app = FastAPI(
 async def add_metrics_middleware(request: Request, call_next):
     """Middleware to track request metrics."""
     start_time = time.time()
-    
     response = await call_next(request)
     
-    # Record metrics
     latency = time.time() - start_time
     endpoint = request.url.path
     method = request.method
     status = response.status_code
-    
+
     REQUEST_COUNTER.labels(method=method, endpoint=endpoint, status=status).inc()
     REQUEST_LATENCY.labels(method=method, endpoint=endpoint).observe(latency)
-    
+
     return response
 
 
@@ -108,13 +100,9 @@ async def root() -> Dict[str, str]:
 
 @app.get("/health", response_model=HealthResponse, tags=["Health"])
 async def health_check() -> HealthResponse:
-    """Health check endpoint.
-    
-    Returns:
-        HealthResponse with service status and model information
-    """
+    """Health check endpoint."""
     uptime = time.time() - SERVICE_START_TIME
-    
+
     return HealthResponse(
         status="healthy" if model_inference.is_loaded() else "degraded",
         model_loaded=model_inference.is_loaded(),
@@ -126,60 +114,97 @@ async def health_check() -> HealthResponse:
 @app.post("/predict", response_model=PredictionResponse, tags=["Prediction"])
 async def predict(request: PredictionRequest) -> PredictionResponse:
     """Make a fraud prediction for a transaction.
-    
+
     Args:
-        request: Prediction request with transaction features
-        
+        request: Prediction request with transaction data
+
     Returns:
         PredictionResponse with fraud score and metadata
-        
-    Raises:
-        HTTPException: If model is not loaded or prediction fails
     """
     if not model_inference.is_loaded():
         raise HTTPException(
             status_code=503,
             detail="Model not loaded. Service is not ready."
         )
-    
+
     start_time = time.time()
-    
+
     try:
-        # Extract features in the correct order
-        features = request.features
-        feature_values = [
-            features.amount,
-            features.hour,
-            features.day_of_week,
-            features.merchant_risk_score,
-            features.card_present,
-            features.international,
-            features.high_risk_country,
-            features.velocity_1h,
-            features.velocity_24h,
-            features.avg_amount_30d
-        ]
+        # Get current time for temporal features
+        dt = datetime.now()
+        trans_hour = dt.hour
+        trans_day = dt.weekday()  # 0=Monday, 6=Sunday
         
+        # Extract merchant data
+        merchant_mcc = int(request.merchant.get('mcc', 5999))
+        merchant_country = request.merchant.get('country', 'FR')
+        is_merchant_international = 1 if merchant_country != 'FR' else 0
+        
+        # Extract card data
+        card_type_str = request.card.get('type', 'physical')
+        card_type = 1 if card_type_str == 'virtual' else 0
+        
+        # Extract context
+        channel_map = {'app': 0, 'web': 1, 'pos': 2, 'atm': 3}
+        channel = channel_map.get(request.context.get('channel', 'app'), 0)
+        
+        context_geo = request.context.get('geo', 'FR')
+        is_international = 1 if context_geo != 'FR' else 0
+        
+        # Calculate derived features
+        is_night = 1 if (trans_hour >= 23 or trans_hour <= 5) else 0
+        is_weekend = 1 if trans_day >= 5 else 0
+        
+        # Amount category: 0=<50, 1=50-200, 2=200-1000, 3=>1000
+        amount = request.amount
+        if amount < 50:
+            amount_category = 0
+        elif amount < 200:
+            amount_category = 1
+        elif amount < 1000:
+            amount_category = 2
+        else:
+            amount_category = 3
+        
+        # Build feature vector in correct order (matching training)
+        feature_values = [
+            amount,                    # amount
+            trans_hour,                # trans_hour
+            trans_day,                 # trans_day
+            merchant_mcc,              # merchant_mcc
+            is_merchant_international, # merchant_country
+            card_type,                 # card_type
+            channel,                   # channel
+            is_international,          # is_international
+            is_night,                  # is_night
+            is_weekend,                # is_weekend
+            amount_category            # amount_category
+        ]
+
         # Make prediction
         fraud_score = model_inference.predict(feature_values)
-        
+
         # Calculate prediction time
         prediction_time_ms = (time.time() - start_time) * 1000
-        
-        # Check if prediction meets SLA
+
+        # Log if exceeds SLA
         if prediction_time_ms > settings.max_prediction_time_ms:
             logger.warning(
                 f"Prediction time {prediction_time_ms:.2f}ms exceeds "
                 f"SLA of {settings.max_prediction_time_ms}ms"
             )
-        
+
+        # Top features based on importance
+        top_features = ["merchant_mcc", "amount", "is_night"]
+
         return PredictionResponse(
-            transaction_id=request.transaction_id,
-            fraud_score=fraud_score,
+            event_id=request.event_id,
+            score=fraud_score,
+            top_features=top_features,
             prediction_time_ms=round(prediction_time_ms, 2),
-            model_version=model_inference.model_version
+            model_version="fraud_lgbm_mvp_v1"
         )
-        
+
     except ValueError as e:
         logger.error(f"Invalid input: {e}")
         raise HTTPException(status_code=400, detail=str(e))
@@ -190,11 +215,7 @@ async def predict(request: PredictionRequest) -> PredictionResponse:
 
 @app.get("/metrics", tags=["Metrics"])
 async def metrics():
-    """Prometheus metrics endpoint.
-    
-    Returns:
-        Prometheus metrics in text format
-    """
+    """Prometheus metrics endpoint."""
     return Response(
         content=generate_latest(),
         media_type=CONTENT_TYPE_LATEST
@@ -228,7 +249,7 @@ async def general_exception_handler(request: Request, exc: Exception):
 
 if __name__ == "__main__":
     import uvicorn
-    
+
     uvicorn.run(
         "app.main:app",
         host=settings.host,
