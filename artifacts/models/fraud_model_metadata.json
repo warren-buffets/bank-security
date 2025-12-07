@@ -1,0 +1,66 @@
+{
+  "feature_names": [
+    "amount",
+    "trans_hour",
+    "trans_day",
+    "merchant_mcc",
+    "merchant_country",
+    "card_type",
+    "channel",
+    "is_international",
+    "is_night",
+    "is_weekend",
+    "amount_category"
+  ],
+  "model_version": "fraud_lgbm_mvp_v1",
+  "auc_score": 0.9937487244897961,
+  "training_date": "2025-12-07T22:57:07.777355",
+  "num_iterations": 30,
+  "fraud_rate": 0.02,
+  "feature_importance": [
+    {
+      "feature": "merchant_mcc",
+      "importance": 14738.016348838806
+    },
+    {
+      "feature": "amount",
+      "importance": 9795.551557779312
+    },
+    {
+      "feature": "is_night",
+      "importance": 9022.850821971893
+    },
+    {
+      "feature": "is_international",
+      "importance": 6183.288589954376
+    },
+    {
+      "feature": "card_type",
+      "importance": 3049.0052518844604
+    },
+    {
+      "feature": "trans_hour",
+      "importance": 1175.3215689659119
+    },
+    {
+      "feature": "amount_category",
+      "importance": 752.1809649467468
+    },
+    {
+      "feature": "trans_day",
+      "importance": 370.07602047920227
+    },
+    {
+      "feature": "channel",
+      "importance": 326.3684985637665
+    },
+    {
+      "feature": "is_weekend",
+      "importance": 35.63798999786377
+    },
+    {
+      "feature": "merchant_country",
+      "importance": 23.849169731140137
+    }
+  ]
+}
