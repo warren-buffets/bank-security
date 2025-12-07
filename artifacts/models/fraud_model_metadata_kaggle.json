@@ -1,0 +1,74 @@
+{
+  "model_version": "fraud_lgbm_kaggle_v1",
+  "trained_at": "2025-12-08T00:31:59.493776",
+  "dataset": "kaggle_kartik2112",
+  "n_samples": 1296675,
+  "n_train": 1037340,
+  "n_test": 259335,
+  "fraud_rate": 0.005788651743883394,
+  "auc_score": 0.9955678556939608,
+  "feature_names": [
+    "amt",
+    "trans_hour",
+    "trans_day",
+    "merchant_mcc",
+    "card_type",
+    "channel",
+    "is_international",
+    "is_night",
+    "is_weekend",
+    "amount_category",
+    "distance_category",
+    "city_pop"
+  ],
+  "feature_importance": [
+    {
+      "feature": "amount_category",
+      "importance": 41199603.47342682
+    },
+    {
+      "feature": "trans_hour",
+      "importance": 9658889.645721436
+    },
+    {
+      "feature": "amt",
+      "importance": 3397211.512512207
+    },
+    {
+      "feature": "merchant_mcc",
+      "importance": 1688494.8336105347
+    },
+    {
+      "feature": "card_type",
+      "importance": 1152963.1645050049
+    },
+    {
+      "feature": "city_pop",
+      "importance": 689593.6533813477
+    },
+    {
+      "feature": "trans_day",
+      "importance": 180021.30417633057
+    },
+    {
+      "feature": "distance_category",
+      "importance": 17754.456832885742
+    },
+    {
+      "feature": "channel",
+      "importance": 15598.916397094727
+    },
+    {
+      "feature": "is_night",
+      "importance": 6787.262893676758
+    },
+    {
+      "feature": "is_weekend",
+      "importance": 5524.477020263672
+    },
+    {
+      "feature": "is_international",
+      "importance": 0.0
+    }
+  ]
+}

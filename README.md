@@ -143,7 +143,6 @@ Client → Decision Engine → [ Rules Service    ]
 | **Decision Engine** | Python FastAPI | Orchestrateur principal |
 | **Model Serving** | LightGBM/XGBoost | Inférence ML (GBDT) |
 | **Rules Service** | Moteur DSL | Règles métier |
-| **Feature Store** | Redis | Features temps réel |
 | **Base données** | PostgreSQL | Events, decisions, cases |
 | **Message Bus** | Kafka | Événements asynchrones |
 | **Observabilité** | Prometheus + Grafana | Monitoring |
