@@ -12,24 +12,29 @@ class Settings(BaseSettings):
     port: int = 8001
     workers: int = 1
 
-    # Model configuration
-    model_path: str = "/models/gbdt_v1.bin"
+    # Model configuration - Kaggle model
+    model_path: str = "/app/artifacts/models/fraud_lgbm_kaggle.bin"
     max_prediction_time_ms: int = 30
 
-    # Feature configuration - MVP features
+    # Feature configuration - Kaggle model features (12 features)
     expected_features: list = [
-        "amount",
+        "amt",
         "trans_hour",
         "trans_day",
         "merchant_mcc",
-        "merchant_country",
         "card_type",
         "channel",
         "is_international",
         "is_night",
         "is_weekend",
-        "amount_category"
+        "amount_category",
+        "distance_category",  # NEW - calculated from geo
+        "city_pop"            # NEW - optional from context
     ]
+
+    # Default values for optional features
+    default_city_pop: int = 100000        # Average city population
+    default_distance_category: int = 1     # 10-50km (medium distance)
 
     # Metrics configuration
     enable_metrics: bool = True
