@@ -93,7 +93,7 @@ services:
     environment:
       - SERVICE_NAME=model-serving
       - LOG_LEVEL=INFO
-      - MODEL_SERVING_MODEL_PATH=/app/artifacts/models/fraud_lgbm_mvp.bin
+      - MODEL_SERVING_MODEL_PATH=/app/artifacts/models/fraud_lgbm_kaggle.bin
     volumes:
       - ./artifacts:/app/artifacts
     ports:
