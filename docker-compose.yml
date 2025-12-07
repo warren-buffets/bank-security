@@ -85,10 +85,83 @@ services:
       - grafana_data:/var/lib/grafana
     ports:
       - "3000:3000"
+  model-serving:
+    build:
+      context: ./services/model-serving
+      dockerfile: Dockerfile
+    container_name: antifraud-model-serving
+    environment:
+      - SERVICE_NAME=model-serving
+      - LOG_LEVEL=INFO
+      - MODEL_SERVING_MODEL_PATH=/app/artifacts/models/fraud_lgbm_mvp.bin
+    volumes:
+      - ./artifacts:/app/artifacts
+    ports:
+      - "8001:8001"
     networks:
       - net_app
     depends_on:
       - prometheus
+
+  rules-service:
+    build:
+      context: ./services/rules-service
+      dockerfile: Dockerfile
+    container_name: antifraud-rules-service
+    environment:
+      - SERVICE_NAME=rules-service
+      - LOG_LEVEL=INFO
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=antifraud
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres_dev
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    ports:
+      - "8003:8003"
+    networks:
+      - net_app
+      - net_data
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  decision-engine:
+    build:
+      context: ./services/decision-engine
+      dockerfile: Dockerfile
+    container_name: antifraud-decision-engine
+    environment:
+      - SERVICE_NAME=decision-engine
+      - LOG_LEVEL=INFO
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=antifraud
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres_dev
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - KAFKA_ENABLE=true
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - MODEL_SERVING_URL=http://model-serving:8001
+      - RULES_SERVICE_URL=http://rules-service:8003
+    ports:
+      - "8000:8000"
+    networks:
+      - net_app
+      - net_data
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      model-serving:
+        condition: service_started
+      rules-service:
+        condition: service_started
 
 networks:
   net_front:

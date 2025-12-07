@@ -1,57 +1,37 @@
-# Environment
-.env
-*.env.local
-
 # Python
 __pycache__/
 *.py[cod]
-*$py.class
 *.so
 .Python
-venv/
 env/
+venv/
 ENV/
-*.egg-info/
-dist/
 build/
+dist/
+*.egg-info/
 
 # IDEs
 .vscode/
 .idea/
 *.swp
-*.swo
-*.swn
-.DS_Store
+*~
+
+# Environment
+.env
+.env.local
+
+# Backup files
+*.bak
+*.bak[0-9]
+*.backup
+
+# Model artifacts
+artifacts/models/*.bin
+artifacts/models/*.pkl
 
 # Logs
 *.log
 logs/
 
-# Data
-*.csv
-*.parquet
-*.db
-*.sqlite
-
-# Models (exclude large binaries)
-artifacts/models/*.bin
-artifacts/models/*.pkl
-
-# Testing
-.pytest_cache/
-.coverage
-htmlcov/
-.tox/
-
-# Docker
-*.pid
-*.seed
-*.pid.lock
-
-# Node
-node_modules/
-package-lock.json
-
 # OS
-Thumbs.db
 .DS_Store
