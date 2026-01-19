@@ -29,6 +29,9 @@ dist/
 artifacts/models/*.bin
 artifacts/models/*.pkl
 
+# Large data files (download from Kaggle)
+artifacts/data/*.csv
+
 # Logs
 *.log
 logs/
