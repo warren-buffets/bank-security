@@ -1,0 +1,187 @@
+name: PR Checks
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  # ==========================================================================
+  # PR Size Check
+  # ==========================================================================
+  pr-size:
+    name: PR Size Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check PR size
+        id: size
+        run: |
+          ADDITIONS=$(git diff --numstat origin/${{ github.base_ref }}...HEAD | awk '{s+=$1} END {print s}')
+          DELETIONS=$(git diff --numstat origin/${{ github.base_ref }}...HEAD | awk '{s+=$2} END {print s}')
+          TOTAL=$((ADDITIONS + DELETIONS))
+          echo "additions=$ADDITIONS" >> $GITHUB_OUTPUT
+          echo "deletions=$DELETIONS" >> $GITHUB_OUTPUT
+          echo "total=$TOTAL" >> $GITHUB_OUTPUT
+
+          if [ "$TOTAL" -gt 1000 ]; then
+            echo "status=large" >> $GITHUB_OUTPUT
+          elif [ "$TOTAL" -gt 500 ]; then
+            echo "status=medium" >> $GITHUB_OUTPUT
+          else
+            echo "status=small" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Comment PR size
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const size = '${{ steps.size.outputs.status }}';
+            const additions = '${{ steps.size.outputs.additions }}';
+            const deletions = '${{ steps.size.outputs.deletions }}';
+
+            const emoji = size === 'large' ? '🔴' : size === 'medium' ? '🟡' : '🟢';
+            const message = `${emoji} **PR Size: ${size.toUpperCase()}**\n\n` +
+              `- Lines added: +${additions}\n` +
+              `- Lines removed: -${deletions}\n\n` +
+              (size === 'large' ? '⚠️ Consider breaking this PR into smaller chunks for easier review.' : '');
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: message
+            });
+
+  # ==========================================================================
+  # Conventional Commits Check
+  # ==========================================================================
+  commit-lint:
+    name: Commit Message Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check commit messages
+        run: |
+          # Check if commits follow conventional commits format
+          COMMITS=$(git log origin/${{ github.base_ref }}..HEAD --format="%s")
+          PATTERN="^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\(.+\))?: .+"
+
+          echo "Checking commit messages..."
+          FAILED=0
+          while IFS= read -r commit; do
+            if [[ ! "$commit" =~ $PATTERN ]]; then
+              echo "❌ Invalid: $commit"
+              FAILED=1
+            else
+              echo "✅ Valid: $commit"
+            fi
+          done <<< "$COMMITS"
+
+          if [ "$FAILED" -eq 1 ]; then
+            echo ""
+            echo "Please use conventional commits format:"
+            echo "  feat: add new feature"
+            echo "  fix: fix a bug"
+            echo "  docs: update documentation"
+            echo "  test: add tests"
+            echo "  refactor: code refactoring"
+            exit 1
+          fi
+
+  # ==========================================================================
+  # Test Coverage Comparison
+  # ==========================================================================
+  coverage-check:
+    name: Coverage Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements-dev.txt
+          pip install -r services/decision-engine/requirements.txt
+          pip install -r services/model-serving/requirements.txt
+          pip install -r services/rules-service/requirements.txt
+
+      - name: Run tests with coverage
+        run: |
+          pytest tests/unit \
+            --cov=services \
+            --cov-report=json \
+            --cov-fail-under=60
+
+      - name: Coverage report
+        uses: actions/github-script@v7
+        if: always()
+        with:
+          script: |
+            const fs = require('fs');
+            let coverage = 0;
+            try {
+              const report = JSON.parse(fs.readFileSync('coverage.json', 'utf8'));
+              coverage = report.totals.percent_covered.toFixed(1);
+            } catch (e) {
+              coverage = 'N/A';
+            }
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## Test Coverage Report\n\n📊 **Coverage: ${coverage}%**\n\nTarget: 70%`
+            });
+
+  # ==========================================================================
+  # Dependency Review
+  # ==========================================================================
+  dependency-review:
+    name: Dependency Review
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
+          deny-licenses: GPL-3.0, AGPL-3.0
+
+  # ==========================================================================
+  # API Breaking Changes
+  # ==========================================================================
+  api-check:
+    name: API Breaking Changes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for API changes
+        run: |
+          # Check if OpenAPI spec changed
+          if git diff origin/${{ github.base_ref }}...HEAD --name-only | grep -q "openapi"; then
+            echo "⚠️ OpenAPI specification changed - please verify backward compatibility"
+            git diff origin/${{ github.base_ref }}...HEAD -- docs/api/openapi.yaml || true
+          fi
+
+          # Check for endpoint changes
+          if git diff origin/${{ github.base_ref }}...HEAD -- 'services/**/main.py' | grep -E "@app\.(get|post|put|delete|patch)"; then
+            echo "⚠️ API endpoint definitions may have changed"
+          fi
