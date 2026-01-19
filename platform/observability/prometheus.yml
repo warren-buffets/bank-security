@@ -14,10 +14,10 @@ scrape_configs:
 
   - job_name: 'model-serving'
     static_configs:
-      - targets: ['model-serving:8000']
+      - targets: ['model-serving:8001']
     metrics_path: '/metrics'
 
   - job_name: 'rules-service'
     static_configs:
-      - targets: ['rules-service:8000']
+      - targets: ['rules-service:8003']
     metrics_path: '/metrics'
