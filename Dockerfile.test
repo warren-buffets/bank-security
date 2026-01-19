@@ -1,0 +1,32 @@
+# Test Runner Dockerfile
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies
+COPY requirements-dev.txt .
+COPY services/decision-engine/requirements.txt ./requirements-decision.txt
+COPY services/model-serving/requirements.txt ./requirements-model.txt
+COPY services/rules-service/requirements.txt ./requirements-rules.txt
+
+RUN pip install --no-cache-dir \
+    -r requirements-dev.txt \
+    -r requirements-decision.txt \
+    -r requirements-model.txt \
+    -r requirements-rules.txt
+
+# Copy test configuration
+COPY pyproject.toml .
+COPY tests/ ./tests/
+COPY services/ ./services/
+
+# Create results directory
+RUN mkdir -p /app/results
+
+# Default command
+CMD ["pytest", "tests/", "-v", "--junitxml=/app/results/junit.xml"]
