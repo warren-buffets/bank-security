@@ -1,0 +1,106 @@
+# Development overrides
+# Automatically merged with docker-compose.yml when running docker compose up
+
+version: '3.9'
+
+services:
+  # Enable hot-reload for development
+  decision-engine:
+    build:
+      context: ./services/decision-engine
+      dockerfile: Dockerfile
+    volumes:
+      - ./services/decision-engine:/app:delegated
+      - /app/__pycache__
+    environment:
+      - LOG_LEVEL=DEBUG
+      - RELOAD=true
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+  model-serving:
+    volumes:
+      - ./services/model-serving:/app:delegated
+      - ./artifacts:/app/artifacts:ro
+      - /app/__pycache__
+    environment:
+      - LOG_LEVEL=DEBUG
+      - RELOAD=true
+    command: uvicorn main:app --host 0.0.0.0 --port 8001 --reload
+
+  rules-service:
+    volumes:
+      - ./services/rules-service:/app:delegated
+      - /app/__pycache__
+    environment:
+      - LOG_LEVEL=DEBUG
+      - RELOAD=true
+    command: uvicorn main:app --host 0.0.0.0 --port 8003 --reload
+
+  case-service:
+    build:
+      context: ./services/case-service
+      dockerfile: Dockerfile
+    volumes:
+      - ./services/case-service:/app:delegated
+      - /app/__pycache__
+    ports:
+      - "8002:8000"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres_dev@postgres:5432/antifraud
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    networks:
+      - net_app
+      - net_data
+
+  # Add pgAdmin for database management
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: antifraud-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@fraudguard.local
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "5050:80"
+    networks:
+      - net_data
+    depends_on:
+      - postgres
+    profiles:
+      - tools
+
+  # Add Redis Commander for Redis management
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: antifraud-redis-commander
+    environment:
+      REDIS_HOSTS: local:redis:6379
+    ports:
+      - "8081:8081"
+    networks:
+      - net_data
+    depends_on:
+      - redis
+    profiles:
+      - tools
+
+  # Add Kafka UI for Kafka management
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: antifraud-kafka-ui
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+    ports:
+      - "8082:8080"
+    networks:
+      - net_data
+    depends_on:
+      - kafka
+    profiles:
+      - tools
