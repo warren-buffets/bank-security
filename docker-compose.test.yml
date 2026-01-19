@@ -1,0 +1,93 @@
+# Test environment configuration
+# Usage: docker compose -f docker-compose.yml -f docker-compose.test.yml up -d
+
+version: '3.9'
+
+services:
+  postgres:
+    environment:
+      POSTGRES_DB: antifraud_test
+    tmpfs:
+      - /var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+
+  redis:
+    command: redis-server --appendonly no
+    tmpfs:
+      - /data
+    ports:
+      - "6380:6379"
+
+  # Disable Kafka for unit tests
+  kafka:
+    profiles:
+      - integration
+
+  # Disable monitoring for tests
+  prometheus:
+    profiles:
+      - integration
+
+  grafana:
+    profiles:
+      - integration
+
+  # Test configuration for services
+  decision-engine:
+    environment:
+      - LOG_LEVEL=WARNING
+      - KAFKA_ENABLE=false
+      - POSTGRES_DB=antifraud_test
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  model-serving:
+    environment:
+      - LOG_LEVEL=WARNING
+
+  rules-service:
+    environment:
+      - LOG_LEVEL=WARNING
+      - POSTGRES_DB=antifraud_test
+
+  # Test runner container
+  test-runner:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    container_name: antifraud-test-runner
+    environment:
+      - TEST_POSTGRES_HOST=postgres
+      - TEST_POSTGRES_PORT=5432
+      - TEST_POSTGRES_DB=antifraud_test
+      - TEST_POSTGRES_USER=postgres
+      - TEST_POSTGRES_PASSWORD=postgres_dev
+      - TEST_REDIS_HOST=redis
+      - TEST_REDIS_PORT=6379
+      - TEST_DECISION_URL=http://decision-engine:8000
+      - TEST_MODEL_URL=http://model-serving:8001
+      - TEST_RULES_URL=http://rules-service:8003
+    volumes:
+      - ./tests:/app/tests:ro
+      - ./services:/app/services:ro
+      - ./pytest.ini:/app/pytest.ini:ro
+      - test_results:/app/results
+    networks:
+      - net_app
+      - net_data
+    depends_on:
+      - postgres
+      - redis
+      - decision-engine
+      - model-serving
+      - rules-service
+    profiles:
+      - test
+    command: pytest tests/ -v --junitxml=/app/results/junit.xml
+
+volumes:
+  test_results:
