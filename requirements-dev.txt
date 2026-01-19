@@ -1,0 +1,67 @@
+# Development and Testing Dependencies
+# Install with: pip install -r requirements-dev.txt
+
+# =============================================================================
+# Testing Framework
+# =============================================================================
+pytest==7.4.4
+pytest-asyncio==0.23.3
+pytest-cov==4.1.0
+pytest-xdist==3.5.0          # Parallel test execution
+pytest-timeout==2.2.0        # Test timeout handling
+pytest-mock==3.12.0          # Mocking utilities
+pytest-env==1.1.3            # Environment variables for tests
+
+# =============================================================================
+# HTTP Testing
+# =============================================================================
+httpx==0.26.0                # Async HTTP client
+respx==0.20.2                # HTTP mocking for httpx
+aioresponses==0.7.6          # Async HTTP mocking
+
+# =============================================================================
+# Code Quality
+# =============================================================================
+ruff==0.1.11                 # Fast Python linter
+black==24.1.0                # Code formatter
+isort==5.13.2                # Import sorting
+mypy==1.8.0                  # Type checking
+
+# =============================================================================
+# Security Scanning
+# =============================================================================
+bandit==1.7.7                # Security linter
+safety==2.3.5                # Dependency vulnerability scanner
+
+# =============================================================================
+# Documentation
+# =============================================================================
+mkdocs==1.5.3                # Documentation generator
+mkdocs-material==9.5.3       # Material theme
+
+# =============================================================================
+# Profiling & Performance
+# =============================================================================
+locust==2.20.1               # Load testing
+py-spy==0.3.14               # Sampling profiler
+memory-profiler==0.61.0      # Memory profiling
+
+# =============================================================================
+# Database Testing
+# =============================================================================
+asyncpg==0.29.0              # PostgreSQL async driver
+redis[hiredis]==5.0.1        # Redis client
+
+# =============================================================================
+# Type Stubs
+# =============================================================================
+types-redis==4.6.0.11
+types-requests==2.31.0.10
+
+# =============================================================================
+# Jupyter & Analysis (optional)
+# =============================================================================
+jupyter==1.0.0
+pandas==2.1.4
+matplotlib==3.8.2
+seaborn==0.13.1
