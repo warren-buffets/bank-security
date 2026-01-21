@@ -15,7 +15,7 @@ services:
     environment:
       - LOG_LEVEL=DEBUG
       - RELOAD=true
-    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
   model-serving:
     volumes:
@@ -25,7 +25,7 @@ services:
     environment:
       - LOG_LEVEL=DEBUG
       - RELOAD=true
-    command: uvicorn main:app --host 0.0.0.0 --port 8001 --reload
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload
 
   rules-service:
     volumes:
@@ -34,7 +34,7 @@ services:
     environment:
       - LOG_LEVEL=DEBUG
       - RELOAD=true
-    command: uvicorn main:app --host 0.0.0.0 --port 8003 --reload
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8003 --reload
 
   case-service:
     build:
