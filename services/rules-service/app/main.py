@@ -157,7 +157,7 @@ async def load_rules_from_db() -> List[Dict]:
         async with app_state['db_pool'].acquire() as conn:
             rows = await conn.fetch("""
                 SELECT id, name, expression, action, priority, enabled, description, metadata, created_at, updated_at
-                FROM rules
+                FROM rules_v2
                 WHERE enabled = true
                 ORDER BY priority DESC
             """)

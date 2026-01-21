@@ -106,9 +106,9 @@ FOR EACH ROW EXECUTE FUNCTION prevent_decision_update();
 
 ---
 
-## Table: `rules`
+## Table: `rules` (versionnée, legacy)
 
-Stocke les règles de détection (versionnées).
+Stocke les règles de détection (versionnées, utilisée pour l'historique).
 
 ```sql
 CREATE TABLE rules (
@@ -125,12 +125,53 @@ CREATE TABLE rules (
 
 -- Index
 CREATE INDEX idx_rules_status ON rules(status) WHERE status = 'published';
-
--- Example DSL rules:
--- "velocity(card_id, 5m).count >= 3"
--- "amount > 1000 AND geo != user_home_geo"
--- "ip IN deny_list OR device_risk = 'HIGH'"
 ```
+
+---
+
+## Table: `rules_v2` (active, utilisée par rules-service)
+
+Table principale des règles utilisée par le rules-service.
+
+```sql
+CREATE TABLE rules_v2 (
+    id              VARCHAR PRIMARY KEY,                   -- Unique rule identifier
+    name            VARCHAR NOT NULL,                      -- Human-readable name
+    expression      TEXT NOT NULL,                         -- Rule expression in DSL
+    action          VARCHAR NOT NULL CHECK(action IN ('allow', 'deny', 'review', 'challenge')),
+    priority        INTEGER DEFAULT 0,                     -- Execution order (higher = first)
+    enabled         BOOLEAN DEFAULT true,                  -- Whether rule is active
+    description     TEXT,
+    metadata        JSONB DEFAULT '{}',                    -- Additional metadata
+    created_at      TIMESTAMPTZ DEFAULT NOW(),
+    updated_at      TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Index for faster lookups
+CREATE INDEX idx_rules_v2_enabled_priority ON rules_v2(enabled, priority DESC);
+
+-- Example expressions:
+-- "amount > 5000"
+-- "velocity_1h > 10"
+-- "card_country != merchant_country"
+-- "mcc IN ('7995', '7801')"
+```
+
+### Règles par défaut
+
+| ID | Nom | Expression | Action | Priorité |
+|----|-----|------------|--------|----------|
+| rule_very_high_amount | Very High Amount | `amount > 10000` | deny | 110 |
+| rule_high_amount | High Amount | `amount > 5000` | review | 100 |
+| rule_extreme_velocity | Extreme Velocity | `velocity_1h > 10` | deny | 95 |
+| rule_night_transaction | Night Transaction | `hour >= 0 AND hour <= 5` | review | 90 |
+| rule_high_velocity | High Velocity | `velocity_1h > 5` | review | 85 |
+| rule_high_risk_country | High Risk Country | `merchant_country IN ('NG', 'RU', 'CN', 'BR')` | review | 78 |
+| rule_cross_border | Cross Border | `card_country != merchant_country` | review | 75 |
+| rule_crypto | Crypto Purchase | `mcc = '6051' AND amount > 1000` | review | 68 |
+| rule_gambling | Gambling | `mcc IN ('7995', '7801', '7802')` | review | 65 |
+| rule_vpn_detected | VPN/Proxy | `proxy_vpn_flag = true AND amount > 500` | review | 58 |
+| rule_new_device | New Device | `device_age_days < 1` | review | 55 |
 
 **Volumétrie**: ~100-500 rules actives
 
@@ -286,13 +327,19 @@ CREATE INDEX idx_audit_logs_ts ON audit_logs(ts DESC);
 ## Scripts de migration
 
 ### V001__init.sql
-Création des tables principales (voir ci-dessus)
+Création des tables principales (events, decisions, rules, lists, cases, labels, audit_logs)
 
 ### V002__indices.sql
 Création des index de performance
 
-### V003__partitions.sql
-Setup partitioning par timestamp
+### V003__triggers.sql
+Triggers d'immutabilité et audit (prevent_decision_update, etc.)
 
-### V004__triggers.sql
-Triggers d'immutabilité et audit
+### V004__seed_data.sql
+Données de test initiales
+
+### V005__rules_service_compat.sql
+- Création de la table `rules_v2` compatible avec rules-service
+- Vue `rules_active` pour mapping legacy
+- Seed des 11 règles de détection par défaut
+- Trigger `updated_at` automatique

@@ -112,20 +112,46 @@ cp .env.example .env
 docker-compose up -d
 ```
 
-## Etape 5: Vérifier que tout fonctionne
+## Etape 5: Appliquer les migrations DB
+```bash
+# Appliquer toutes les migrations
+for f in platform/postgres/migrations/V*.sql; do
+  docker exec -i antifraud-postgres psql -U postgres -d antifraud < "$f"
+done
+
+# Ou migration par migration
+docker exec -i antifraud-postgres psql -U postgres -d antifraud < platform/postgres/migrations/V001__init.sql
+docker exec -i antifraud-postgres psql -U postgres -d antifraud < platform/postgres/migrations/V002__indices.sql
+docker exec -i antifraud-postgres psql -U postgres -d antifraud < platform/postgres/migrations/V003__triggers.sql
+docker exec -i antifraud-postgres psql -U postgres -d antifraud < platform/postgres/migrations/V004__seed_data.sql
+docker exec -i antifraud-postgres psql -U postgres -d antifraud < platform/postgres/migrations/V005__rules_service_compat.sql
+```
+
+## Etape 6: Vérifier que tout fonctionne
 ```bash
 # Santé des services
 curl http://localhost:8000/health  # decision-engine
 curl http://localhost:8001/health  # model-serving
-curl http://localhost:8002/health  # rules-service
+curl http://localhost:8003/health  # rules-service
+curl http://localhost:8002/health  # case-service
 
-# Test de prédiction
-curl -X POST http://localhost:8000/predict \
+# Vérifier que les règles sont chargées (doit retourner 11 règles)
+curl http://localhost:8003/rules
+
+# Test de prédiction complet
+curl -X POST http://localhost:8000/v1/score \
   -H "Content-Type: application/json" \
-  -d '{"amount": 100, "merchant": "test"}'
+  -d '{
+    "event_id": "test-123",
+    "amount": 500.0,
+    "currency": "EUR",
+    "merchant": {"id": "m1", "name": "Store", "mcc": "5411", "country": "FR"},
+    "card": {"card_id": "c1", "user_id": "u1", "type": "physical"},
+    "context": {"ip": "1.2.3.4", "channel": "web"}
+  }'
 ```
 
-## Etape 6: Nettoyer les fichiers temporaires locaux
+## Etape 7: Nettoyer les fichiers temporaires locaux
 Il peut rester des fichiers `-PC-Warren` à supprimer:
 ```bash
 find . -name "*-PC-Warren*" -type f -delete
@@ -138,8 +164,8 @@ find . -name "*-PC-Warren*" -type f -delete
 |---------|------|
 | decision-engine | 8000 |
 | model-serving | 8001 |
-| rules-service | 8002 |
-| case-service | 8003 |
+| case-service | 8002 |
+| rules-service | 8003 |
 | PostgreSQL | 5432 |
 | Redis | 6379 |
 | Kafka | 9092 |
