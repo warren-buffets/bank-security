@@ -249,6 +249,62 @@ make load
 
 ---
 
+## 🛠️ Outils de Développement
+
+### Makefile - Interface Principale
+
+Le [Makefile](Makefile) fournit des commandes courtes pour toutes les opérations courantes :
+
+```bash
+# Voir toutes les commandes disponibles
+make help
+
+# Commandes essentielles
+make up              # Démarrer tous les services
+make down            # Arrêter tous les services
+make logs            # Voir les logs en temps réel
+make health          # Vérifier la santé de tous les services
+make test            # Lancer les tests
+make db-migrate      # Appliquer les migrations
+make ml-train        # Entraîner le modèle ML
+make setup           # Setup complet (up + migrate + health)
+```
+
+📖 **Guide complet** : [docs/MAKEFILE_GUIDE.md](docs/MAKEFILE_GUIDE.md)
+
+### Scripts Helper
+
+7 scripts shell dans [scripts/](scripts/) pour des opérations avancées :
+
+- **[db-helper.sh](scripts/db-helper.sh)** - PostgreSQL (migrations, requêtes, stats)
+- **[docker-helper.sh](scripts/docker-helper.sh)** - Docker Compose (start/stop/rebuild)
+- **[k8s-helper.sh](scripts/k8s-helper.sh)** - Kubernetes (deploy, logs, port-forward)
+- **[kafka-helper.sh](scripts/kafka-helper.sh)** - Kafka (topics, consume, produce)
+- **[ml-helper.sh](scripts/ml-helper.sh)** - ML Models (train, test, evaluate)
+- **[redis-helper.sh](scripts/redis-helper.sh)** - Redis (cache, monitoring)
+- **[retrain.sh](scripts/retrain.sh)** - Ré-entraînement automatique
+
+Exemple :
+```bash
+# Consommer les événements de fraude en temps réel
+./scripts/kafka-helper.sh consume fraud-events
+
+# Voir les stats de la base de données
+./scripts/db-helper.sh stats
+
+# Tester une prédiction ML
+./scripts/ml-helper.sh test
+```
+
+📖 **Guide complet** : [docs/SCRIPTS_GUIDE.md](docs/SCRIPTS_GUIDE.md)
+
+### Philosophie : Make vs Scripts
+
+- **`make`** = Commandes courtes pour 80% des cas d'usage quotidiens
+- **Scripts shell** = Puissance complète avec arguments personnalisés
+
+---
+
 ## 🗓️ Roadmap
 
 ### ✅ MVP (Phase actuelle)

@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xargs ls:*)",
+      "Bash(chmod:*)",
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "Bash(python:*)",
+      "Bash(cd:*)",
+      "Bash(git rm:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(gh pr create --title \"chore: Remove obsolete root files\" --body \"$\\(cat <<''EOF''\n## Summary\n- Remove temporary/outdated files from root \\(1000, KAGGLE_*.md, NEXT_STEPS.md, RECAP.md\\)\n- Move training scripts to scripts/ directory  \n- Update .gitignore for better project hygiene\n\n## Test plan\n- [x] Verify no broken imports or references\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\nEOF\n\\)\")",
+      "Bash(brew list:*)",
+      "Bash(git checkout:*)",
+      "Bash(pip install:*)",
+      "Bash(docker --version:*)",
+      "Bash(docker compose:*)",
+      "Bash(git filter-branch:*)",
+      "Bash(git stash push:*)",
+      "Bash(FILTER_BRANCH_SQUELCH_WARNING=1 git filter-branch:*)",
+      "Bash(git fetch:*)",
+      "Bash(git reset:*)",
+      "Bash(git remote add:*)",
+      "Bash(git log:*)"
+    ]
+  }
+}

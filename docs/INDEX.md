@@ -1,5 +1,20 @@
 # Documentation FraudGuard AI - Index
 
+## 🎯 Document Principal : Six-Pager
+
+### [SIX_PAGER.md](SIX_PAGER.md) ⭐ **DOCUMENT DE RÉFÉRENCE**
+**Six-Pager Technique complet** (format Amazon/Microsoft)
+- Résumé exécutif (problème, solution, résultats attendus)
+- Contexte & principes (contraintes, exigences, tenets)
+- Design proposé (architecture, flux, choix techniques)
+- Alternatives évaluées (options rejetées, trade-offs)
+- Risques & mitigations (dépendances, fallbacks)
+- Plan & métriques (phasage, OKRs, SLAs, coûts)
+
+👉 **Document de soutenance - À lire en priorité**
+
+---
+
 ## 📚 Documents principaux (3 fichiers essentiels)
 
 ### 1. [GUIDE-RAPIDE.md](GUIDE-RAPIDE.md) ⭐ COMMENCER ICI
@@ -45,6 +60,47 @@
 
 ---
 
+## 📊 Métriques & Choix Techniques
+
+### [METRICS.md](METRICS.md) 📈
+**KPI et Métriques ML**
+- AUC-ROC (objectif ≥ 0.94)
+- Taux de faux positifs (FPR < 2%)
+- Calibration du modèle (Platt Scaling, Isotonic Regression)
+- Métriques business (Precision, Recall, F1)
+- Métriques opérationnelles (P95, P99, throughput)
+- Dashboard de monitoring
+
+### [IP_GEOLOCATION.md](IP_GEOLOCATION.md) 🌍
+**Géolocalisation IP - Choix Technique**
+- Problématique (performance, RGPD, précision)
+- Option 1: Hash IP seul (anonymisation)
+- Option 2: WHOIS/GeoIP (enrichissement)
+- **Solution retenue**: Approche hybride (Hash + GeoLite2)
+- Features ML extraites (pays, région, ASN, distance)
+- Implémentation et performance
+- RGPD compliance
+
+---
+
+## 🏗️ Architecture Decision Records (ADR)
+
+### [adr/README.md](adr/README.md)
+**Index des décisions architecturales**
+
+#### ADRs Disponibles:
+- [ADR-001: Architecture Microservices](adr/001-microservices-architecture.md)
+- [ADR-002: Redis pour l'Idempotence](adr/002-redis-idempotency.md)
+- [ADR-003: Moteur de Règles avec DSL](adr/003-rules-engine-dsl.md)
+
+Chaque ADR documente :
+- Contexte et problème
+- Décision retenue
+- Conséquences (positives/négatives)
+- Alternatives évaluées et rejetées
+
+---
+
 ## 📄 Documents complémentaires
 
 ### [database-schema.md](database-schema.md)
@@ -59,6 +115,19 @@ Spécification API complète (OpenAPI 3.0)
 - Endpoint POST /v1/score
 - Schémas requête/réponse
 - Exemples
+
+### [MAKEFILE_GUIDE.md](MAKEFILE_GUIDE.md) 🛠️
+**Guide complet du Makefile**
+- Commandes Docker (up, down, logs, rebuild)
+- Commandes Database (migrate, reset, stats)
+- Commandes Kafka, Redis, ML
+- Workflows complets
+
+### [SCRIPTS_GUIDE.md](SCRIPTS_GUIDE.md) 📜
+**Guide des 7 scripts helper**
+- db-helper.sh, docker-helper.sh, k8s-helper.sh
+- kafka-helper.sh, ml-helper.sh, redis-helper.sh
+- retrain.sh (ré-entraînement automatique)
 
 ---
 
