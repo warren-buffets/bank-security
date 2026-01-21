@@ -4,7 +4,27 @@ Ce document liste toutes les Pull Requests créées pour le développement de Fr
 
 ## 🎯 Pull Requests disponibles
 
-### 1. Database Migrations
+### 1. Six-Pager Technical Documentation ⭐ NEW
+**Branch**: `main`
+**Commit**: `320cc26`
+**Description**: [PR_SIX_PAGER_DOCUMENTATION.md](PR_SIX_PAGER_DOCUMENTATION.md)
+**Fichiers**: +11 docs, +4 ADR, +4 setup tools, -27 PC-Warren files
+**Lignes**: +4027 / -2997 (net +1030)
+**Status**: ✅ Merged
+
+**Contenu**:
+- Six-Pager complet (format Amazon/Microsoft)
+- Métriques ML (AUC, FPR, calibration)
+- IP Geolocation strategy (Hash + GeoLite2)
+- 3 Architecture Decision Records (microservices, Redis, Rules)
+- Guides Makefile et Scripts helper
+- Setup tools (check-setup, INSTALL_DOCKER)
+
+**Impact**: Documentation professionnelle prête pour soutenance
+
+---
+
+### 2. Database Migrations
 **Branch**: `feature/database-migrations`  
 **Description**: PR_DATABASE_MIGRATIONS.md  
 **Fichiers**: 4 migrations SQL (344 lignes)  
