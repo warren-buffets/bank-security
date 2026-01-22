@@ -386,10 +386,12 @@ Détails : [ADR-001](adr/001-microservices-architecture.md)
 | **Logistic Regression** | 0.88 | 1ms | 1 MB | ❌ Pas assez précis |
 | **Random Forest** | 0.93 | 15ms | 500 MB | ❌ Trop lent |
 | **XGBoost** | 0.95 | 8ms | 50 MB | ✅ Bon mais lourd |
-| **LightGBM** ✅ | 0.94 | 5ms | 30 MB | ✅ **Choisi** |
+| **LightGBM** ✅ | 0.996 | 5ms | 350 KB | ✅ **Choisi** |
 | **Neural Network** | 0.94 | 20ms | 100 MB | ❌ Trop lent |
 
 **Choix** : **LightGBM** = meilleur compromis précision/latence
+
+**⚠️ ATTENTION - Dataset actuel** : Le modèle est entraîné sur Kaggle (kartik2112) qui présente un **biais sur les montants** : toute transaction > 300€ est considérée suspecte. Voir [SIX_PAGER_ML_MODEL.md](SIX_PAGER_ML_MODEL.md) pour détails et recommandation de changer vers IEEE-CIS.
 
 ### Cache (Idempotence)
 
@@ -424,6 +426,7 @@ Détails : [IP_GEOLOCATION.md](IP_GEOLOCATION.md)
 | **Redis down** | Moyen | Élevé | Redis Cluster (3 nodes), fallback mode |
 | **Kafka lag** | Faible | Moyen | Monitoring lag, scale consumers |
 | **Model drift** | Élevé | Élevé | AUC monitoring, retrain automatique |
+| **Dataset bias (Kaggle)** | **Actuel** | **Critique** | **Changer vers IEEE-CIS (voir SIX_PAGER_ML_MODEL.md)** |
 | **Latence dégradée** | Moyen | Élevé | Circuit breaker, timeout strict (50ms) |
 | **PostgreSQL bottleneck** | Faible | Moyen | Read replicas, sharding si > 1M cas |
 

@@ -215,29 +215,100 @@ Dans le Decision Engine, le score ML est interprété :
 
 ---
 
-## 5. Limitations Connues
+## 5. Limitations Connues & Action Requise
 
-### Biais du dataset
+### ⚠️ PROBLÈME CRITIQUE : Biais du Dataset Kaggle
 
-1. **Origine US** : Le dataset Kaggle simule des transactions américaines. Les patterns de fraude européens peuvent différer.
+Le dataset Kaggle utilisé pour l'entraînement présente un **biais fondamental** qui rend le modèle **inadapté pour un usage en production bancaire européenne**.
 
-2. **Distribution des montants** : 24.5% des transactions 500-2000€ sont des fraudes dans le dataset. Ce n'est pas représentatif d'une vraie banque.
+#### Analyse du biais
 
-3. **Pas de vélocité** : Le modèle ne prend pas en compte le nombre de transactions récentes. Un fraudeur faisant 10 transactions en 1h ne sera pas détecté par ce seul critère.
+| Catégorie de montant | Taux de fraude (Kaggle) | Taux réel (banque) | Écart |
+|---------------------|-------------------------|--------------------| ------|
+| < 100€ | 0.16% | ~0.1% | OK |
+| 100-500€ | 1.0% | ~0.2% | **5x trop élevé** |
+| 500-2000€ | **24.5%** | ~0.5% | **50x trop élevé** |
+| > 2000€ | 0% | ~1% | Inversé |
 
-### Impact sur les prédictions
+**Conséquence** : Le modèle considère TOUT achat > 300€ comme frauduleux (score > 0.95).
 
-| Scénario | Score actuel | Attendu | Problème |
-|----------|--------------|---------|----------|
-| 300€ achat Amazon FR | ~0.97 | < 0.3 | Faux positif (dataset bias) |
-| 45€ achat local | ~0.001 | < 0.1 | ✅ OK |
-| 45€ depuis IP russe | ~0.001 | > 0.5 | Faux négatif (distance peu importante) |
+#### Origine du problème
 
-### Recommandations futures
+Le dataset Kaggle (kartik2112/fraud-detection) est :
+- **Simulé** : Données générées, pas réelles
+- **US-centré** : Patterns de consommation américains
+- **Biaisé** : Fraudes artificiellement concentrées sur montants moyens-élevés
+- **Médiane des fraudes = 396€** : Non représentatif d'une vraie distribution
 
-1. **Court terme** : Ajuster les seuils de décision dans le Decision Engine
-2. **Moyen terme** : Ajouter features de vélocité (tx/24h)
-3. **Long terme** : Entraîner sur un dataset bancaire européen réel
+#### Impact sur les prédictions
+
+| Scénario | Score actuel | Score attendu (réel) | Verdict |
+|----------|--------------|----------------------|---------|
+| 25€ café | 0.001 | < 0.01 | ✅ OK |
+| 45€ courses | 0.001 | < 0.01 | ✅ OK |
+| **250€ Amazon FR** | **0.97** | < 0.1 | ❌ **FAUX POSITIF** |
+| **500€ électroménager** | **0.98** | < 0.2 | ❌ **FAUX POSITIF** |
+| 45€ IP russe | 0.001 | > 0.5 | ❌ **FAUX NÉGATIF** |
+
+---
+
+### 🔴 ACTION REQUISE : Changer de Dataset
+
+**Le modèle actuel ne doit PAS être utilisé en production** sans l'une des actions suivantes :
+
+#### Option 1 : Dataset IEEE-CIS Fraud Detection (Recommandé)
+
+**Source** : [Kaggle IEEE-CIS](https://www.kaggle.com/c/ieee-fraud-detection)
+
+| Caractéristique | Kaggle actuel | IEEE-CIS |
+|-----------------|---------------|----------|
+| Transactions | 1.3M | 590K train + 500K test |
+| Origine | Simulé | **Verizon (réel)** |
+| Features | 12 | **434 features** |
+| Distribution | Biaisée | **Réaliste** |
+| Montants | Concentrés | **Distribués** |
+
+**Avantages** :
+- Données réelles de e-commerce
+- Distribution des fraudes réaliste
+- Plus de features (device, browser, email domain)
+
+**Inconvénients** :
+- Plus complexe à preprocesser
+- Nécessite feature selection
+
+#### Option 2 : Dataset PaySim
+
+**Source** : [Kaggle PaySim](https://www.kaggle.com/datasets/ealaxi/paysim1)
+
+| Caractéristique | Valeur |
+|-----------------|--------|
+| Transactions | 6.3M |
+| Type | Mobile money (Afrique) |
+| Fraudes | 8,213 (0.13%) |
+
+**Avantages** :
+- Grand volume
+- Taux de fraude réaliste
+
+**Inconvénients** :
+- Mobile money ≠ carte bancaire
+- Pas de features géographiques
+
+#### Option 3 : Données Internes (Meilleure solution)
+
+Si disponible, utiliser des données de transactions réelles (anonymisées) de la banque cible.
+
+---
+
+### Recommandations par priorité
+
+| Priorité | Action | Effort | Impact |
+|----------|--------|--------|--------|
+| 🔴 **P0** | Changer pour IEEE-CIS | 2-3 jours | Élimine faux positifs montants |
+| 🟡 P1 | Ajouter features vélocité | 1 jour | Détecte patterns temporels |
+| 🟡 P2 | Intégrer détection VPN | 1 jour | Réduit faux négatifs géo |
+| 🟢 P3 | SHAP explicabilité | 2 jours | Compliance audit |
 
 ---
 
@@ -271,12 +342,12 @@ Dans le Decision Engine, le score ML est interprété :
 
 ### Évolutions prévues
 
-| Phase | Feature | Impact |
-|-------|---------|--------|
-| V1.1 | Vélocité (tx/24h) | +5% AUC estimé |
-| V1.2 | Détection VPN | Réduire faux négatifs geo |
-| V2.0 | Dataset européen | Réduire faux positifs montants |
-| V2.1 | SHAP explainability | Compliance audit |
+| Phase | Feature | Impact | Status |
+|-------|---------|--------|--------|
+| **V1.1** | **Changer dataset → IEEE-CIS** | **Élimine faux positifs** | 🔴 **REQUIS** |
+| V1.2 | Vélocité (tx/24h) | +5% AUC estimé | Planifié |
+| V1.3 | Détection VPN | Réduire faux négatifs geo | Planifié |
+| V2.0 | SHAP explainability | Compliance audit | Backlog |
 
 ---
 
