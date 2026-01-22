@@ -18,6 +18,7 @@ from .models import (
     ErrorResponse
 )
 from .inference import model_inference
+from .geolocation import geolocate_ip
 
 # Configure logging
 logging.basicConfig(
@@ -180,22 +181,43 @@ async def predict(request: PredictionRequest) -> PredictionResponse:
         is_night = 1 if (trans_hour >= 23 or trans_hour <= 5) else 0
         is_weekend = 1 if trans_day >= 5 else 0
 
-        # Amount category (0: <50, 1: 50-200, 2: 200-1000, 3: >1000)
-        if amount < 50:
+        # Amount category adjusted for European banking context
+        # Thresholds: [100, 500, 2000] - more realistic for legitimate purchases
+        # 0: <100€ (small daily purchases)
+        # 1: 100-500€ (regular purchases)
+        # 2: 500-2000€ (large purchases)
+        # 3: >2000€ (exceptional purchases)
+        if amount < 100:
             amount_category = 0
-        elif amount < 200:
+        elif amount < 500:
             amount_category = 1
-        elif amount < 1000:
+        elif amount < 2000:
             amount_category = 2
         else:
             amount_category = 3
 
-        # NEW: City population (optional from context)
-        city_pop = request.context.get('city_pop', settings.default_city_pop)
-
-        # NEW: Distance category (optional - calculated from geo coordinates)
+        # Geolocation from IP address
+        user_ip = request.context.get('ip')
         user_lat = request.context.get('user_lat')
         user_long = request.context.get('user_long')
+        city_pop = request.context.get('city_pop')
+
+        # If IP provided but no coordinates, geolocate the IP
+        if user_ip and not all([user_lat, user_long]):
+            geo = await geolocate_ip(user_ip)
+            if geo.success:
+                user_lat = geo.lat
+                user_long = geo.lon
+                city_pop = geo.city_pop
+                logger.info(f"Geolocated IP {user_ip} -> {geo.city} ({geo.lat}, {geo.lon}), pop={geo.city_pop}")
+            else:
+                logger.warning(f"IP geolocation failed for {user_ip}: {geo.error}")
+
+        # Use defaults if still not available
+        if city_pop is None:
+            city_pop = settings.default_city_pop
+
+        # Distance category (calculated from geo coordinates)
         merch_lat = request.merchant.get('lat')
         merch_long = request.merchant.get('long')
 
@@ -203,7 +225,7 @@ async def predict(request: PredictionRequest) -> PredictionResponse:
             # Calculate actual distance
             distance_km = haversine_distance(user_lat, user_long, merch_lat, merch_long)
             distance_category = calculate_distance_category(distance_km)
-            logger.debug(f"Calculated distance: {distance_km:.2f}km (category {distance_category})")
+            logger.info(f"Calculated distance: {distance_km:.2f}km (category {distance_category})")
         else:
             # Use default if geo data not provided
             distance_category = settings.default_distance_category
@@ -227,6 +249,12 @@ async def predict(request: PredictionRequest) -> PredictionResponse:
             distance_category,
             city_pop
         ]
+
+        # Log features for debugging
+        logger.info(f"Features: amt={amount}, hour={trans_hour}, day={trans_day}, "
+                    f"mcc={merchant_mcc}, card_type={card_type}, channel={channel}, "
+                    f"is_intl={is_international}, is_night={is_night}, is_weekend={is_weekend}, "
+                    f"amt_cat={amount_category}, dist_cat={distance_category}, city_pop={city_pop}")
 
         # Make prediction
         fraud_score = model_inference.predict(feature_values)
