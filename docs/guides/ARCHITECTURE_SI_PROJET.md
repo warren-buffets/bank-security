@@ -18,7 +18,7 @@ Les fondations du système reposent sur des décisions clés visant la maintenab
 
 #### b. Communication Asynchrone vs. Synchrone
 
-*   **Principe :** Nous privilégions une communication asynchrone via un bus de messages pour les actions qui n'requirent pas une réponse immédiate (ex: notifier d'autres systèmes après une décision).
+*   **Principe :** Nous privilégions une communication asynchrone via un bus de messages pour les actions qui ne requirent pas une réponse immédiate (ex: notifier d'autres systèmes après une décision).
 *   **Alternative non retenue :** La communication **synchrone par appels API REST directs** entre tous les services. Cela crée un couplage fort et des latences en chaîne si un service est lent.
 *   **Justification du choix :** Le mode asynchrone garantit le **découplage** et la **résilience**. Il assure une meilleure gestion des pics de charge et une robustesse globale.
 
