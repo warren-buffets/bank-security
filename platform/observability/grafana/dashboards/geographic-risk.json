@@ -1,0 +1,95 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "gridPos": { "h": 4, "w": 24, "x": 0, "y": 0 },
+      "id": 1,
+      "options": {
+        "content": "Geo risk panels require metrics labeled by country or geo. Current services expose no geo labels in Prometheus. Recommended: add a label like country or geo to fraud_decisions_total and fraud_score_histogram.",
+        "mode": "markdown"
+      },
+      "title": "Setup Note",
+      "type": "text"
+    },
+    {
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+      "id": 2,
+      "options": {
+        "legend": { "calcs": [], "displayMode": "list", "placement": "bottom" }
+      },
+      "targets": [
+        {
+          "expr": "topk(10, sum(rate(fraud_decisions_total[5m])) by (country))",
+          "legendFormat": "{{country}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Top Countries by Decisions/sec",
+      "type": "timeseries"
+    },
+    {
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+      "id": 3,
+      "options": {
+        "legend": { "calcs": [], "displayMode": "list", "placement": "bottom" }
+      },
+      "targets": [
+        {
+          "expr": "topk(10, sum(rate(fraud_decisions_total{decision=\"DENY\"}[5m])) by (country))",
+          "legendFormat": "{{country}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Top Countries by Deny/sec",
+      "type": "timeseries"
+    },
+    {
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+      "id": 4,
+      "options": {
+        "legend": { "calcs": [], "displayMode": "list", "placement": "bottom" }
+      },
+      "targets": [
+        {
+          "expr": "topk(10, sum(rate(fraud_decisions_total{decision=\"CHALLENGE\"}[5m])) by (country))",
+          "legendFormat": "{{country}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Top Countries by Challenge/sec",
+      "type": "timeseries"
+    },
+    {
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+      "id": 5,
+      "targets": [
+        {
+          "expr": "sum(rate(fraud_score_histogram_bucket{le=\"+Inf\"}[5m])) by (country)",
+          "legendFormat": "{{country}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Score Volume by Country",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 38,
+  "tags": ["fraudguard", "analyst", "geo"],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "title": "Geographic Risk Dashboard",
+  "uid": "geographic-risk"
+}
