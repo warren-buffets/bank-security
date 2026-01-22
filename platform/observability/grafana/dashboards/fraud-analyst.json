@@ -1,0 +1,165 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+      "id": 1,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }
+      },
+      "targets": [
+        { "expr": "sum(increase(fraud_decisions_total[24h]))", "refId": "A" }
+      ],
+      "title": "Decisions (24h)",
+      "type": "stat"
+    },
+    {
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
+      "id": 2,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }
+      },
+      "targets": [
+        {
+          "expr": "sum(increase(fraud_decisions_total{decision=\"DENY\"}[24h])) / sum(increase(fraud_decisions_total[24h])) * 100",
+          "refId": "A"
+        }
+      ],
+      "title": "Deny Rate (%)",
+      "type": "stat"
+    },
+    {
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
+      "id": 3,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }
+      },
+      "targets": [
+        {
+          "expr": "sum(increase(fraud_decisions_total{decision=\"CHALLENGE\"}[24h])) / sum(increase(fraud_decisions_total[24h])) * 100",
+          "refId": "A"
+        }
+      ],
+      "title": "Challenge Rate (%)",
+      "type": "stat"
+    },
+    {
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
+      "id": 4,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }
+      },
+      "targets": [
+        { "expr": "avg(fraud_score_avg)", "refId": "A" }
+      ],
+      "title": "Avg Fraud Score",
+      "type": "stat"
+    },
+    {
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+      "id": 5,
+      "options": {
+        "legend": { "calcs": [], "displayMode": "list", "placement": "bottom" }
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(fraud_decisions_total[5m])) by (decision)",
+          "legendFormat": "{{decision}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Decisions per Second",
+      "type": "timeseries"
+    },
+    {
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+      "id": 6,
+      "options": {
+        "legend": { "calcs": [], "displayMode": "list", "placement": "bottom" }
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(rule_matches_total[5m])) by (rule_name)",
+          "legendFormat": "{{rule_name}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Rule Matches per Second",
+      "type": "timeseries"
+    },
+    {
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+      "id": 7,
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum(rate(fraud_score_histogram_bucket[5m])) by (le))",
+          "legendFormat": "P50 Score",
+          "refId": "A"
+        },
+        {
+          "expr": "histogram_quantile(0.90, sum(rate(fraud_score_histogram_bucket[5m])) by (le))",
+          "legendFormat": "P90 Score",
+          "refId": "B"
+        }
+      ],
+      "title": "Fraud Score Distribution",
+      "type": "timeseries"
+    },
+    {
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+      "id": 8,
+      "options": {
+        "legend": { "calcs": [], "displayMode": "list", "placement": "bottom" }
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(fraud_score_histogram_bucket{le=\"+Inf\"}[5m])) - sum(rate(fraud_score_histogram_bucket{le=\"0.7\"}[5m]))",
+          "legendFormat": "Score > 0.7",
+          "refId": "A"
+        }
+      ],
+      "title": "High Risk Volume per Second",
+      "type": "timeseries"
+    },
+    {
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 20 },
+      "id": 9,
+      "targets": [
+        {
+          "expr": "topk(10, sum(rate(rule_matches_total[5m])) by (rule_name))",
+          "legendFormat": "{{rule_name}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Top Rules (5m)",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 38,
+  "tags": ["fraudguard", "analyst"],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "title": "Fraud Analyst Dashboard",
+  "uid": "fraud-analyst"
+}
