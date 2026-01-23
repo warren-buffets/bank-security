@@ -8,6 +8,7 @@ import hashlib
 from typing import Optional, Dict, Any
 from datetime import datetime
 from app.config import settings
+from app.audit import create_audit_entry, sign_audit_log
 
 logger = logging.getLogger(__name__)
 
@@ -167,35 +168,113 @@ class PostgresStorage:
     async def get_decision(self, decision_id: str) -> Optional[Dict[str, Any]]:
         """
         Retrieve decision by ID.
-        
+
         Args:
             decision_id: Decision identifier
-            
+
         Returns:
             Decision record or None
         """
         if not self.pool:
             return None
-        
+
         try:
             async with self.pool.acquire() as conn:
                 row = await conn.fetchrow(
                     """
-                    SELECT decision_id, event_id, tenant_id, decision, score, 
+                    SELECT decision_id, event_id, tenant_id, decision, score,
                            rule_hits, reasons, latency_ms, model_version, created_at
                     FROM decisions
                     WHERE decision_id = $1
                     """,
                     decision_id
                 )
-            
+
             if row:
                 return dict(row)
             return None
-            
+
         except Exception as e:
             logger.error(f"Error retrieving decision {decision_id}: {e}")
             return None
+
+    async def store_audit_log(
+        self,
+        actor: str,
+        action: str,
+        entity: str,
+        entity_id: str,
+        details: Optional[Dict[str, Any]] = None,
+        ip_address: Optional[str] = None
+    ) -> bool:
+        """
+        Store audit log entry with HMAC-SHA256 signature.
+
+        Args:
+            actor: Who performed the action (service, user, system)
+            action: What action was performed
+            entity: What type of entity was affected
+            entity_id: ID of the affected entity
+            details: Additional details (optional)
+            ip_address: IP address of the actor (optional)
+
+        Returns:
+            True if stored successfully
+
+        Example:
+            >>> await storage.store_audit_log(
+            ...     actor="decision-engine",
+            ...     action="SCORE_TRANSACTION",
+            ...     entity="transaction",
+            ...     entity_id="txn_123",
+            ...     details={"score": 0.85, "decision": "REVIEW"}
+            ... )
+        """
+        if not self.pool:
+            logger.error("PostgreSQL pool not initialized")
+            return False
+
+        # Create audit entry with HMAC signature
+        audit_entry = create_audit_entry(
+            actor=actor,
+            action=action,
+            entity=entity,
+            entity_id=entity_id,
+            details=details,
+            ip_address=ip_address
+        )
+
+        try:
+            # Prepare before/after based on details
+            before_data = None
+            after_data = details if details else {}
+
+            # Add ip_address to after_data if provided
+            if ip_address:
+                after_data["ip_address"] = ip_address
+
+            async with self.pool.acquire() as conn:
+                await conn.execute(
+                    """
+                    INSERT INTO audit_logs
+                    (actor, action, entity, entity_id, before, after, signature, ts)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7::bytea, NOW())
+                    """,
+                    audit_entry["actor"],
+                    audit_entry["action"],
+                    audit_entry["entity"],
+                    audit_entry["entity_id"],
+                    json.dumps(before_data) if before_data else None,
+                    json.dumps(after_data),
+                    audit_entry["signature"].encode('utf-8')  # Convert hex string to bytea
+                )
+
+            logger.debug(f"Stored audit log: {action} on {entity}:{entity_id} by {actor} (signature: {audit_entry['signature'][:16]}...)")
+            return True
+
+        except Exception as e:
+            logger.error(f"Error storing audit log: {e}")
+            return False
 
 
 # Global instance
