@@ -1,5 +1,5 @@
 #!/bin/bash
-# FraudGuard AI - Docker Helper Script
+# SafeGuard AI - Docker Helper Script
 # Usage: ./scripts/docker-helper.sh [command]
 
 set -e
@@ -110,7 +110,7 @@ migrate() {
     docker compose exec -T postgres sh -c '
         for f in /migrations/*.sql; do
             echo "Running $f..."
-            psql -U postgres -d antifraud -f "$f" 2>/dev/null || true
+            psql -U postgres -d safeguard -f "$f" 2>/dev/null || true
         done
     '
     log_success "Migrations complete."
@@ -164,6 +164,17 @@ smoke_test() {
     log_success "Smoke test complete."
 }
 
+# Setup dataset
+setup_data() {
+    log_info "Setting up IEEE-CIS dataset..."
+    if [ -f "./scripts/setup_dataset.sh" ]; then
+        chmod +x ./scripts/setup_dataset.sh
+        ./scripts/setup_dataset.sh
+    else
+        log_error "Script ./scripts/setup_dataset.sh not found."
+    fi
+}
+
 # Reset everything (for fresh start)
 reset() {
     log_warn "This will reset all data and start fresh."
@@ -180,7 +191,7 @@ reset() {
 
 # Show help
 help() {
-    echo "FraudGuard AI - Docker Helper"
+    echo "SafeGuard AI - Docker Helper"
     echo ""
     echo "Usage: $0 [command] [args]"
     echo ""
@@ -196,6 +207,7 @@ help() {
     echo "  shell [service] Open shell in container (default: decision-engine)"
     echo "  stats           Show resource usage"
     echo "  smoke_test      Run quick smoke test"
+    echo "  setup_data      Download and unzip IEEE-CIS dataset"
     echo "  clean           Remove all containers, volumes, images"
     echo "  reset           Full reset (clean + start + migrate)"
     echo "  help            Show this help"
@@ -214,6 +226,7 @@ case "${1:-help}" in
     shell) shell "$2" ;;
     stats) stats ;;
     smoke_test) smoke_test ;;
+    setup_data) setup_data ;;
     clean) clean ;;
     reset) reset ;;
     help|*) help ;;

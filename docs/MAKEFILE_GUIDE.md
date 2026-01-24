@@ -1,8 +1,8 @@
-# Guide du Makefile - FraudGuard
+# Guide du Makefile - SafeGuard
 
 ## Introduction
 
-Le [Makefile](../Makefile) est l'**interface principale** pour interagir avec le projet FraudGuard. Il simplifie l'utilisation des scripts shell et fournit des commandes courtes et mémorables.
+Le [Makefile](../Makefile) est l'**interface principale** pour interagir avec le projet SafeGuard. Il simplifie l'utilisation des scripts shell et fournit des commandes courtes et mémorables.
 
 ## Philosophie : Make vs Scripts Shell
 

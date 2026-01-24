@@ -17,7 +17,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_PREFIX: ${{ github.repository_owner }}/fraudguard
+  IMAGE_PREFIX: ${{ github.repository_owner }}/safeguard
 
 jobs:
   # ==========================================================================
@@ -87,7 +87,7 @@ jobs:
     if: github.event.inputs.environment == 'staging' || startsWith(github.ref, 'refs/tags/v')
     environment:
       name: staging
-      url: https://staging.fraudguard.example.com
+      url: https://staging.safeguard.example.com
 
     steps:
       - uses: actions/checkout@v4
@@ -130,7 +130,7 @@ jobs:
     if: github.event.inputs.environment == 'production'
     environment:
       name: production
-      url: https://api.fraudguard.example.com
+      url: https://api.safeguard.example.com
 
     steps:
       - uses: actions/checkout@v4
@@ -145,7 +145,7 @@ jobs:
 
       - name: Deploy with Helm
         run: |
-          helm upgrade --install fraudguard ./deploy/helm/fraudguard \
+          helm upgrade --install safeguard ./deploy/helm/safeguard \
             --namespace production \
             --set global.image.tag=${{ github.sha }} \
             --set global.image.registry=${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }} \
@@ -154,7 +154,7 @@ jobs:
 
       - name: Verify deployment
         run: |
-          kubectl get pods -n production -l app=fraudguard
+          kubectl get pods -n production -l app=safeguard
           kubectl rollout status deployment/decision-engine -n production --timeout=300s
 
       - name: Notify deployment
@@ -163,13 +163,13 @@ jobs:
         with:
           payload: |
             {
-              "text": "FraudGuard deployment to production: ${{ job.status }}",
+              "text": "SafeGuard deployment to production: ${{ job.status }}",
               "blocks": [
                 {
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "*FraudGuard Production Deployment*\nStatus: ${{ job.status }}\nVersion: ${{ github.sha }}\nTriggered by: ${{ github.actor }}"
+                    "text": "*SafeGuard Production Deployment*\nStatus: ${{ job.status }}\nVersion: ${{ github.sha }}\nTriggered by: ${{ github.actor }}"
                   }
                 }
               ]

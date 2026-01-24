@@ -23,7 +23,23 @@
       "Bash(git fetch:*)",
       "Bash(git reset:*)",
       "Bash(git remote add:*)",
-      "Bash(git log:*)"
+      "Bash(git log:*)",
+      "Bash(__NEW_LINE_f176ccb346a943ab__ echo \"\")",
+      "Bash(__NEW_LINE_d0413f4fa3cf92c9__ echo \"\")",
+      "Bash(__NEW_LINE_8cadde153157926b__ echo \"\")",
+      "Bash(__NEW_LINE_267a19875fd38785__ echo \"\")",
+      "Bash(__NEW_LINE_d39183ad00b690fe__ echo \"\")",
+      "Bash(__NEW_LINE_9507ad2020f99032__ echo \"\")",
+      "Bash(curl:*)",
+      "Bash(docker exec:*)",
+      "Bash(brew install:*)",
+      "Bash(git pull:*)",
+      "Bash(sudo lsof:*)",
+      "Bash(lsof:*)",
+      "Bash(docker container ls:*)",
+      "Bash(docker rm:*)",
+      "Bash(git stash:*)",
+      "Bash(git stash pop:*)"
     ]
   }
 }

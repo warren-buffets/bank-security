@@ -1,8 +1,6 @@
 # Development overrides
 # Automatically merged with docker-compose.yml when running docker compose up
 
-version: '3.9'
-
 services:
   # Enable hot-reload for development
   decision-engine:
@@ -44,10 +42,10 @@ services:
       - ./services/case-service:/app:delegated
       - /app/__pycache__
     ports:
-      - "8002:8000"
+      - "8004:8002"
     environment:
-      - DATABASE_URL=postgresql+asyncpg://postgres:postgres_dev@postgres:5432/antifraud
-      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres_dev@postgres:5432/safeguard
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
     depends_on:
       postgres:
         condition: service_healthy
@@ -60,9 +58,9 @@ services:
   # Add pgAdmin for database management
   pgadmin:
     image: dpage/pgadmin4:latest
-    container_name: antifraud-pgadmin
+    container_name: safeguard-pgadmin
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@fraudguard.local
+      PGADMIN_DEFAULT_EMAIL: admin@safeguard.local
       PGADMIN_DEFAULT_PASSWORD: admin
       PGADMIN_CONFIG_SERVER_MODE: 'False'
     ports:
@@ -77,7 +75,7 @@ services:
   # Add Redis Commander for Redis management
   redis-commander:
     image: rediscommander/redis-commander:latest
-    container_name: antifraud-redis-commander
+    container_name: safeguard-redis-commander
     environment:
       REDIS_HOSTS: local:redis:6379
     ports:
@@ -92,7 +90,7 @@ services:
   # Add Kafka UI for Kafka management
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
-    container_name: antifraud-kafka-ui
+    container_name: safeguard-kafka-ui
     environment:
       KAFKA_CLUSTERS_0_NAME: local
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092

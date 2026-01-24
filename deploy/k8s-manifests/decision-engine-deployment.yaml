@@ -2,11 +2,11 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: decision-engine
-  namespace: fraudguard
+  namespace: safeguard
   labels:
     app.kubernetes.io/name: decision-engine
     app.kubernetes.io/component: api
-    app.kubernetes.io/part-of: fraudguard-ai
+    app.kubernetes.io/part-of: safeguard-ai
 spec:
   replicas: 3
   selector:
@@ -23,15 +23,15 @@ spec:
     spec:
       containers:
         - name: decision-engine
-          image: ghcr.io/fraudguard/decision-engine:latest
+          image: ghcr.io/safeguard/decision-engine:latest
           ports:
             - containerPort: 8000
               name: http
           envFrom:
             - configMapRef:
-                name: fraudguard-config
+                name: safeguard-config
             - secretRef:
-                name: fraudguard-secrets
+                name: safeguard-secrets
           env:
             - name: SERVICE_NAME
               value: "decision-engine"
@@ -77,7 +77,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: decision-engine
-  namespace: fraudguard
+  namespace: safeguard
   labels:
     app.kubernetes.io/name: decision-engine
 spec:
@@ -94,7 +94,7 @@ apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: decision-engine-hpa
-  namespace: fraudguard
+  namespace: safeguard
 spec:
   scaleTargetRef:
     apiVersion: apps/v1

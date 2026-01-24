@@ -1,6 +1,6 @@
 # Decision Engine Service
 
-The **Decision Engine** is the orchestration service for FraudGuard AI's real-time fraud detection system. It coordinates parallel calls to the Model Serving and Rules Service to make fraud decisions in under 100ms.
+The **Decision Engine** is the orchestration service for SafeGuard AI's real-time fraud detection system. It coordinates parallel calls to the Model Serving and Rules Service to make fraud decisions in under 100ms.
 
 ## Overview
 
@@ -170,7 +170,7 @@ REDIS_PASSWORD=
 # PostgreSQL
 POSTGRES_HOST=localhost
 POSTGRES_PORT=5432
-POSTGRES_DB=fraudguard
+POSTGRES_DB=safeguard
 POSTGRES_USER=postgres
 POSTGRES_PASSWORD=postgres
 
@@ -346,4 +346,4 @@ spec:
 
 ## License
 
-Proprietary - FraudGuard AI
+Proprietary - SafeGuard AI

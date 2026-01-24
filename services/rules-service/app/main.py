@@ -1,5 +1,5 @@
 """
-FraudGuard AI - Rules Service
+SafeGuard AI - Rules Service
 FastAPI service for fraud detection rules evaluation.
 """
 import asyncio
@@ -135,7 +135,7 @@ async def lifespan(app: FastAPI):
 
 # Create FastAPI app
 app = FastAPI(
-    title="FraudGuard AI - Rules Service",
+    title="SafeGuard AI - Rules Service",
     description="Rule evaluation service for fraud detection",
     version=config.SERVICE_VERSION,
     lifespan=lifespan
@@ -164,6 +164,12 @@ async def load_rules_from_db() -> List[Dict]:
             
             rules = []
             for row in rows:
+                # Parse metadata if it's a string (JSONB might be returned as string)
+                metadata = row['metadata'] or {}
+                if isinstance(metadata, str):
+                    import json
+                    metadata = json.loads(metadata)
+
                 rules.append({
                     'id': row['id'],
                     'name': row['name'],
@@ -172,7 +178,7 @@ async def load_rules_from_db() -> List[Dict]:
                     'priority': row['priority'],
                     'enabled': row['enabled'],
                     'description': row['description'],
-                    'metadata': row['metadata'] or {}
+                    'metadata': metadata
                 })
             
             # Update cache

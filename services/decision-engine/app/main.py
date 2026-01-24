@@ -77,7 +77,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="FraudGuard AI - Decision Engine",
+    title="SafeGuard AI - Decision Engine",
     version=settings.VERSION,
     description="Real-time fraud detection orchestration service",
     lifespan=lifespan

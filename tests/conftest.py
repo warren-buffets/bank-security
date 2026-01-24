@@ -1,5 +1,5 @@
 """
-FraudGuard AI - Shared Test Fixtures
+SafeGuard AI - Shared Test Fixtures
 
 This module provides reusable fixtures for testing the fraud detection system.
 """
@@ -26,7 +26,7 @@ def test_config() -> dict:
     return {
         "postgres_host": os.getenv("TEST_POSTGRES_HOST", "localhost"),
         "postgres_port": int(os.getenv("TEST_POSTGRES_PORT", "5432")),
-        "postgres_db": os.getenv("TEST_POSTGRES_DB", "antifraud_test"),
+        "postgres_db": os.getenv("TEST_POSTGRES_DB", "safeguard_test"),
         "postgres_user": os.getenv("TEST_POSTGRES_USER", "postgres"),
         "postgres_password": os.getenv("TEST_POSTGRES_PASSWORD", "postgres_dev"),
         "redis_host": os.getenv("TEST_REDIS_HOST", "localhost"),

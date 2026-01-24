@@ -1,4 +1,4 @@
 """
-FraudGuard AI - Rules Service
+SafeGuard AI - Rules Service
 """
 __version__ = "1.0.0"

@@ -1,8 +1,8 @@
-# Métriques et KPI - FraudGuard
+# Métriques et KPI - SafeGuard
 
 ## Vue d'ensemble
 
-Ce document définit les métriques clés pour évaluer et monitorer le système de détection de fraude FraudGuard. Ces métriques couvrent à la fois la **performance ML** et l'**impact business**.
+Ce document définit les métriques clés pour évaluer et monitorer le système de détection de fraude SafeGuard. Ces métriques couvrent à la fois la **performance ML** et l'**impact business**.
 
 ---
 
@@ -27,7 +27,7 @@ où TPR = True Positive Rate (Recall)
 - **AUC < 0.7** : Médiocre
 - **AUC = 0.5** : Équivalent à un tirage aléatoire
 
-**Objectif FraudGuard** :
+**Objectif SafeGuard** :
 - ✅ **Minimum acceptable** : AUC ≥ 0.90
 - 🎯 **Objectif** : AUC ≥ 0.94
 - 🚀 **Excellence** : AUC ≥ 0.96
@@ -68,7 +68,7 @@ où FP = False Positives (vraies transactions bloquées)
 - **FPR = 3-5%** : Acceptable
 - **FPR > 5%** : Problématique (frustration client)
 
-**Objectif FraudGuard** :
+**Objectif SafeGuard** :
 - 🎯 **Objectif** : FPR < 2%
 - ⚠️ **Alerte** : FPR > 3%
 - 🚨 **Critique** : FPR > 5%
@@ -135,7 +135,7 @@ où p_i = probabilité prédite
 Brier Score parfait = 0
 ```
 
-**Objectif FraudGuard** :
+**Objectif SafeGuard** :
 - 🎯 Brier Score < 0.10
 
 **Méthodes de calibration** :

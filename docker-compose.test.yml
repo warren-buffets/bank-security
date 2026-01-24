@@ -1,12 +1,10 @@
 # Test environment configuration
 # Usage: docker compose -f docker-compose.yml -f docker-compose.test.yml up -d
 
-version: '3.9'
-
 services:
   postgres:
     environment:
-      POSTGRES_DB: antifraud_test
+      POSTGRES_DB: safeguard_test
     tmpfs:
       - /var/lib/postgresql/data
     ports:
@@ -38,7 +36,7 @@ services:
     environment:
       - LOG_LEVEL=WARNING
       - KAFKA_ENABLE=false
-      - POSTGRES_DB=antifraud_test
+      - POSTGRES_DB=safeguard_test
     depends_on:
       postgres:
         condition: service_healthy
@@ -52,18 +50,18 @@ services:
   rules-service:
     environment:
       - LOG_LEVEL=WARNING
-      - POSTGRES_DB=antifraud_test
+      - POSTGRES_DB=safeguard_test
 
   # Test runner container
   test-runner:
     build:
       context: .
       dockerfile: Dockerfile.test
-    container_name: antifraud-test-runner
+    container_name: safeguard-test-runner
     environment:
       - TEST_POSTGRES_HOST=postgres
       - TEST_POSTGRES_PORT=5432
-      - TEST_POSTGRES_DB=antifraud_test
+      - TEST_POSTGRES_DB=safeguard_test
       - TEST_POSTGRES_USER=postgres
       - TEST_POSTGRES_PASSWORD=postgres_dev
       - TEST_REDIS_HOST=redis

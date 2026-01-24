@@ -1,4 +1,4 @@
-# FraudGuard AI - Rules Service
+# SafeGuard AI - Rules Service
 
 High-performance rules evaluation service for fraud detection in banking transactions.
 
@@ -172,9 +172,9 @@ EVALUATION_TIMEOUT_MS=50
 # PostgreSQL
 POSTGRES_HOST=localhost
 POSTGRES_PORT=5432
-POSTGRES_DB=fraudguard
-POSTGRES_USER=fraudguard
-POSTGRES_PASSWORD=fraudguard
+POSTGRES_DB=safeguard
+POSTGRES_USER=safeguard
+POSTGRES_PASSWORD=safeguard
 
 # Redis
 REDIS_HOST=localhost
@@ -376,4 +376,4 @@ def _evaluate_function(self, func_name: str, args: List[str], context: Dict[str,
 
 ## License
 
-Copyright (c) 2024 FraudGuard AI
+Copyright (c) 2024 SafeGuard AI

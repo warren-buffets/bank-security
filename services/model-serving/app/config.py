@@ -7,7 +7,7 @@ class Settings(BaseSettings):
     """Application settings."""
 
     # Service configuration
-    service_name: str = "fraudguard-model-serving"
+    service_name: str = "safeguard-model-serving"
     host: str = "0.0.0.0"
     port: int = 8001
     workers: int = 1

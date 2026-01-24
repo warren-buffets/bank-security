@@ -16,10 +16,11 @@ class Settings(BaseSettings):
     PORT: int = 8000
     
     # Timeouts and budgets (milliseconds)
-    ORCHESTRATION_TIMEOUT_MS: int = 15
-    MODEL_SERVING_TIMEOUT_MS: int = 30
-    RULES_SERVICE_TIMEOUT_MS: int = 50
-    TOTAL_TIMEOUT_MS: int = 100
+    # Note: Model serving may call IP geolocation API (1-2s latency)
+    ORCHESTRATION_TIMEOUT_MS: int = 100
+    MODEL_SERVING_TIMEOUT_MS: int = 5000  # 5s for IP geolocation
+    RULES_SERVICE_TIMEOUT_MS: int = 1000
+    TOTAL_TIMEOUT_MS: int = 6000
     
     # External services
     MODEL_SERVING_URL: str = os.getenv("MODEL_SERVING_URL", "http://model-serving:8001")
@@ -35,7 +36,7 @@ class Settings(BaseSettings):
     # PostgreSQL configuration
     POSTGRES_HOST: str = os.getenv("POSTGRES_HOST", "localhost")
     POSTGRES_PORT: int = int(os.getenv("POSTGRES_PORT", "5432"))
-    POSTGRES_DB: str = os.getenv("POSTGRES_DB", "fraudguard")
+    POSTGRES_DB: str = os.getenv("POSTGRES_DB", "safeguard")
     POSTGRES_USER: str = os.getenv("POSTGRES_USER", "postgres")
     POSTGRES_PASSWORD: str = os.getenv("POSTGRES_PASSWORD", "postgres")
     POSTGRES_MAX_CONNECTIONS: int = 20

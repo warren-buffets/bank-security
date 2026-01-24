@@ -10,19 +10,19 @@ from sqlalchemy import ForeignKey, DECIMAL
 from sqlalchemy.sql import func
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy import Table, MetaData
+from sqlalchemy import Table
 
 # --- Configuration for DB connection ---
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+asyncpg://postgres:postgres_dev@postgres:5432/antifraud")
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+asyncpg://postgres:postgres_dev@postgres:5432/safeguard")
 
 Base = declarative_base()
 
 # Explicitly declare the 'events' table for foreign key resolution
-metadata_obj = MetaData()
+# Use Base.metadata so SQLAlchemy can resolve the foreign key
 events_table = Table(
-    "events", metadata_obj,
+    "events", Base.metadata,
     Column("event_id", String, primary_key=True),
-    extend_existing=True # Allow redefining if already defined implicitly
+    extend_existing=True  # Allow redefining if already defined implicitly
 )
 
 class CaseDB(Base):
@@ -41,7 +41,12 @@ class CaseDB(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), onupdate=func.now(), default=func.now(), nullable=False)
 
-    labels = relationship("LabelDB", back_populates="case", primaryjoin="CaseDB.event_id == LabelDB.event_id")
+    labels = relationship(
+        "LabelDB",
+        back_populates="case",
+        primaryjoin="CaseDB.event_id == foreign(LabelDB.event_id)",
+        viewonly=True
+    )
 
 class LabelDB(Base):
     __tablename__ = "labels"
@@ -54,14 +59,12 @@ class LabelDB(Base):
     ts = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     metadata_ = Column(JSON, nullable=True) # Renamed to metadata_ to avoid conflict with SQLAlchemy's internal 'metadata'
 
-    # The relationship to CaseDB is indirect via event_id and needs careful mapping.
-    # We will re-establish relationships and possibly adjust if there's a direct link to cases needed.
-    # For now, let's connect it to CaseDB via event_id for queries.
+    # The relationship to CaseDB is indirect via event_id
     case = relationship(
         "CaseDB",
         back_populates="labels",
-        primaryjoin="LabelDB.event_id == CaseDB.event_id",
-        remote_side=[CaseDB.event_id]
+        primaryjoin="foreign(LabelDB.event_id) == CaseDB.event_id",
+        viewonly=True
     )
 
 # --- Async Database Engine and Session ---

@@ -17,9 +17,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the rest of the application code
 COPY app/ app/
 
-# Make port 8000 available to the world outside this container
-EXPOSE 8000
+# Make port 8002 available to the world outside this container
+EXPOSE 8002
 
 # Run the Uvicorn server when the container starts
 # Use 0.0.0.0 to make the server accessible from outside the container
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8002"]

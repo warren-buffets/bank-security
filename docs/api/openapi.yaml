@@ -1,6 +1,6 @@
 openapi: 3.0.3
 info:
-  title: Antifraud API
+  title: SafeGuard API
   version: 0.1.0
   description: Real-time fraud detection engine for card payments
   contact:
@@ -9,7 +9,7 @@ info:
 servers:
 - url: http://localhost:8000
   description: Development
-- url: https://api.antifraud.bank.com
+- url: https://api.safeguard.bank.com
   description: Production
 paths:
   /v1/score:

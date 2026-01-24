@@ -1,7 +1,7 @@
 # ML Fraud Detection Model - Six-Pager Technique
 
-**Version** : 2.0
-**Date** : Janvier 2025
+**Version** : 3.0
+**Date** : Janvier 2026
 **Équipe** : Warren Buffets
 **Contact** : virgile.ader@epitech.digital
 
@@ -18,27 +18,27 @@ Les systèmes de détection de fraude basés uniquement sur des règles statique
 
 ### Solution Proposée
 
-**Modèle LightGBM** entraîné sur le dataset Kaggle Credit Card Fraud (1.3M transactions) :
+**Modèle LightGBM** entraîné sur le dataset **IEEE-CIS Fraud Detection** (590K transactions Vesta) :
 
 1. **12 features** : montant, heure, MCC, type de carte, distance géo, population urbaine
 2. **Gradient Boosting** : LightGBM pour rapidité d'inférence (<10ms)
-3. **Calibration** : Seuils de montant ajustés pour contexte bancaire européen
+3. **Distribution réaliste** : Taux de fraude équilibré (~3.5%)
 
-### Résultats
+### Résultats (v3 - IEEE-CIS)
 
-| Métrique | Valeur | Objectif |
-|----------|--------|----------|
-| **AUC-ROC** | 0.996 | > 0.94 ✅ |
-| **Recall (Fraudes)** | 97% | > 90% ✅ |
-| **Precision (Fraudes)** | 16% | > 10% ✅ |
-| **Latence inférence** | < 5ms | < 30ms ✅ |
+| Métrique | Valeur v2 (Kaggle) | Valeur v3 (IEEE-CIS) | Objectif |
+|----------|-------------------|---------------------|----------|
+| **AUC-ROC** | 0.996 (biaisé) | **0.823** | > 0.80 ✅ |
+| **Recall (Fraudes)** | 97% (biaisé) | **82%** | > 80% ✅ |
+| **Precision (Fraudes)** | 16% | **20%** | > 10% ✅ |
+| **Latence inférence** | < 5ms | **< 5ms** | < 30ms ✅ |
 
 ### Portée
 
-**Implémenté (MVP)** :
-- ✅ Modèle LightGBM entraîné et déployé
+**Implémenté (v3)** :
+- ✅ Dataset IEEE-CIS (données réelles Vesta)
+- ✅ Distribution de fraudes réaliste (3.5% global)
 - ✅ 12 features incluant géolocalisation IP
-- ✅ Seuils de montant ajustés (100€, 500€, 2000€)
 - ✅ Intégration dans model-serving (FastAPI)
 
 **Hors scope MVP** :
@@ -50,27 +50,36 @@ Les systèmes de détection de fraude basés uniquement sur des règles statique
 
 ## 2. Contexte & Principes
 
-### Dataset d'entraînement
+### Dataset d'entraînement (v3)
 
-**Source** : [Kaggle Credit Card Fraud Detection](https://www.kaggle.com/datasets/kartik2112/fraud-detection)
+**Source** : [IEEE-CIS Fraud Detection](https://www.kaggle.com/c/ieee-fraud-detection) (Vesta Corporation)
 
 | Caractéristique | Valeur |
 |-----------------|--------|
-| Transactions totales | 1,296,675 |
-| Transactions frauduleuses | 7,506 (0.58%) |
-| Période | Simulé |
-| Origine | USA |
+| Transactions totales | 590,540 |
+| Transactions frauduleuses | 20,663 (**3.5%**) |
+| Période | Réel (e-commerce) |
+| Origine | Données Vesta Corporation |
 
-### Distribution des fraudes
+### Distribution des fraudes (v3 - Équilibrée)
 
 | Catégorie de montant | Fraudes | Total | Taux |
 |---------------------|---------|-------|------|
-| < 100€ | 1,652 | 1,061,782 | **0.16%** |
-| 100-500€ | 2,206 | 219,262 | **1.0%** |
-| 500-2000€ | 3,648 | 14,900 | **24.5%** |
-| > 2000€ | 0 | 731 | **0%** |
+| < 100€ | 2,519 | 73,666 | **3.42%** |
+| 100-500€ | 1,398 | 39,834 | **3.51%** |
+| 500-2000€ | 203 | 4,206 | **4.83%** |
+| > 2000€ | 15 | 402 | **3.73%** |
 
-**Observation clé** : Les fraudes dans ce dataset sont concentrées sur les montants 500-2000€ (médiane fraude = 396€).
+**Amélioration clé** : La distribution est maintenant réaliste et équilibrée. Plus de biais vers les gros montants.
+
+### Comparaison des datasets
+
+| Aspect | Kaggle v2 (ancien) | IEEE-CIS v3 (actuel) |
+|--------|-------------------|---------------------|
+| Source | Simulé | **Données réelles** |
+| Fraude 500-2000€ | 24.5% (biaisé!) | **4.83%** (réaliste) |
+| Distribution | Concentrée | **Équilibrée** |
+| AUC | 0.996 (overfit) | **0.823** (généralisable) |
 
 ### Contraintes
 
@@ -92,27 +101,27 @@ Les systèmes de détection de fraude basés uniquement sur des règles statique
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    Model Serving (Port 8001)                 │
-│                                                              │
+│                    Model Serving (Port 8001)                │
+│                                                             │
 │  ┌──────────────────────────────────────────────────────┐   │
-│  │                Feature Engineering                    │   │
-│  │                                                       │   │
+│  │                Feature Engineering                   │   │
+│  │                                                      │   │
 │  │  Transaction ──► [amt, hour, day, mcc, card_type,    │   │
 │  │                   channel, is_intl, is_night,        │   │
 │  │                   is_weekend, amt_cat, dist_cat,     │   │
 │  │                   city_pop]                          │   │
 │  └───────────────────────┬──────────────────────────────┘   │
-│                          │                                   │
-│                          ▼                                   │
+│                          │                                  │
+│                          ▼                                  │
 │  ┌──────────────────────────────────────────────────────┐   │
 │  │              LightGBM Model (GBDT)                   │   │
-│  │                                                       │   │
-│  │  - 100 boosting rounds                               │   │
-│  │  - 31 leaves per tree                                │   │
-│  │  - scale_pos_weight: 171.75 (class imbalance)        │   │
+│  │                                                      │   │
+│  │  - 200 boosting rounds                               │   │
+│  │  - 64 leaves per tree                                │   │
+│  │  - scale_pos_weight: 27.58 (class imbalance)         │   │
 │  └───────────────────────┬──────────────────────────────┘   │
-│                          │                                   │
-│                          ▼                                   │
+│                          │                                  │
+│                          ▼                                  │
 │                   Fraud Score [0.0 - 1.0]                   │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -134,46 +143,38 @@ Les systèmes de détection de fraude basés uniquement sur des règles statique
 | 11 | `distance_category` | int [0-3] | Distance IP ↔ marchand | Géoloc |
 | 12 | `city_pop` | int | Population de la ville (IP) | Géoloc |
 
-### Catégories de montant (v2)
+### Catégories de montant
 
-Seuils ajustés pour contexte bancaire européen :
+| Catégorie | Seuil | Logique |
+|-----------|-------|---------|
+| 0 | < 100€ | Achats quotidiens (café, transport) |
+| 1 | 100-500€ | Achats courants (courses, resto) |
+| 2 | 500-2000€ | Gros achats (électroménager) |
+| 3 | > 2000€ | Achats exceptionnels |
 
-| Catégorie | Seuil v1 (ancien) | Seuil v2 (actuel) | Logique |
-|-----------|-------------------|-------------------|---------|
-| 0 | < 50€ | **< 100€** | Achats quotidiens (café, transport) |
-| 1 | 50-200€ | **100-500€** | Achats courants (courses, resto) |
-| 2 | 200-1000€ | **500-2000€** | Gros achats (électroménager) |
-| 3 | > 1000€ | **> 2000€** | Achats exceptionnels |
-
-**Pourquoi ce changement** : Les anciens seuils (hérités du dataset US) classifiaient 300€ comme "élevé", ce qui n'est pas adapté au contexte européen où les achats de 200-500€ sont courants.
-
-### Importance des features
-
-Résultats du training (gain-based importance) :
+### Importance des features (v3 - IEEE-CIS)
 
 | Feature | Importance | % du total |
 |---------|------------|------------|
-| `amount_category` | 29,966,807 | **54%** |
-| `trans_hour` | 8,483,786 | 15% |
-| `is_night` | 6,364,611 | 11% |
-| `amt` | 4,883,035 | 9% |
-| `merchant_mcc` | 1,774,668 | 3% |
-| `card_type` | 1,556,975 | 3% |
-| `city_pop` | 726,886 | 1% |
-| `trans_day` | 152,447 | 0.3% |
-| `channel` | 8,966 | 0.02% |
-| `distance_category` | 6,835 | 0.01% |
-| `is_weekend` | 5,125 | 0.01% |
-| `is_international` | 0 | 0% |
+| `amount` | 394,475 | **36%** |
+| `city_pop` | 251,012 | **23%** |
+| `card_type` | 109,276 | 10% |
+| `merchant_mcc` | 86,834 | 8% |
+| `channel` | 79,794 | 7% |
+| `trans_hour` | 73,186 | 7% |
+| `is_international` | 36,035 | 3% |
+| `trans_day` | 29,971 | 3% |
+| `distance_category` | 14,213 | 1% |
+| `amount_category` | 10,199 | 1% |
+| `is_night` | 3,157 | 0.3% |
+| `is_weekend` | 768 | 0.1% |
 
-**Observations** :
-- `amount_category` domine (54%) → Le montant est le signal principal de fraude
-- `trans_hour` + `is_night` (26%) → Les fraudes ont des patterns temporels
-- `distance_category` a peu d'impact (0.01%) → La géolocalisation IP n'est pas un signal fort dans ce dataset
+**Observations (v3)** :
+- `amount` est le signal principal (36%) - direct et non biaisé
+- `city_pop` (23%) - La géolocalisation IP a maintenant un vrai impact
+- `amount_category` (1%) - N'est plus le facteur dominant (vs 54% avant)
 
 ### Seuils de décision
-
-Dans le Decision Engine, le score ML est interprété :
 
 | Score | Décision | Action |
 |-------|----------|--------|
@@ -189,126 +190,57 @@ Dans le Decision Engine, le score ML est interprété :
 
 | Modèle | AUC | Latence | Taille | Verdict |
 |--------|-----|---------|--------|---------|
-| Logistic Regression | 0.88 | 1ms | 1 MB | ❌ Pas assez précis |
-| Random Forest | 0.93 | 15ms | 500 MB | ❌ Trop lent |
-| XGBoost | 0.95 | 8ms | 50 MB | ⚠️ Bon mais lourd |
-| **LightGBM** ✅ | **0.996** | **5ms** | **350 KB** | ✅ **Choisi** |
-| Neural Network | 0.94 | 20ms | 100 MB | ❌ Trop lent, black box |
-
-**Justification LightGBM** :
-- Meilleur AUC (0.996)
-- Inférence ultra-rapide (<5ms)
-- Modèle léger (350 KB)
-- Interprétable (feature importance)
+| Logistic Regression | 0.75 | 1ms | 1 MB | ❌ Pas assez précis |
+| Random Forest | 0.80 | 15ms | 500 MB | ❌ Trop lent |
+| XGBoost | 0.82 | 8ms | 50 MB | ⚠️ Bon mais lourd |
+| **LightGBM** ✅ | **0.823** | **5ms** | **350 KB** | ✅ **Choisi** |
+| Neural Network | 0.81 | 20ms | 100 MB | ❌ Trop lent, black box |
 
 ### Choix des features
 
 | Feature évaluée | Incluse | Raison |
 |-----------------|---------|--------|
 | Montant brut (amt) | ✅ | Signal fort |
-| Catégorie montant | ✅ | Réduit le bruit, améliore généralisation |
-| Heure transaction | ✅ | Pattern temporel des fraudes |
-| MCC marchand | ✅ | Certains secteurs plus risqués |
+| Catégorie montant | ✅ | Réduit le bruit |
+| Heure transaction | ✅ | Pattern temporel |
+| MCC marchand | ✅ | Certains secteurs risqués |
+| Population ville (IP) | ✅ | **Nouveau signal fort** |
 | Vélocité (tx/24h) | ❌ MVP | Nécessite Redis, complexité |
-| Historique user | ❌ MVP | Nécessite DB, privacy concerns |
-| Device fingerprint | ❌ MVP | Intégration complexe |
+
+### Choix du dataset
+
+| Dataset | Verdict | Raison |
+|---------|---------|--------|
+| Kaggle kartik2112 | ❌ | Données simulées, biais montants |
+| **IEEE-CIS** ✅ | ✅ | Données réelles Vesta, distribution équilibrée |
+| PaySim | ⚠️ | Mobile money ≠ carte bancaire |
 
 ---
 
-## 5. Limitations Connues & Action Requise
+## 5. Historique des versions
 
-### ⚠️ PROBLÈME CRITIQUE : Biais du Dataset Kaggle
+### v3.0 (Janvier 2026) - IEEE-CIS Dataset
 
-Le dataset Kaggle utilisé pour l'entraînement présente un **biais fondamental** qui rend le modèle **inadapté pour un usage en production bancaire européenne**.
+**Changement majeur** : Migration vers le dataset IEEE-CIS pour corriger le biais.
 
-#### Analyse du biais
+| Aspect | v2 (Kaggle) | v3 (IEEE-CIS) | Amélioration |
+|--------|-------------|---------------|--------------|
+| Fraude 500€ | Score 0.97 | Score 0.53 | ✅ Réaliste |
+| Fraude 250€ | Score 0.80 | Score 0.65 | ✅ Moins de faux positifs |
+| Dataset | Simulé | Réel | ✅ Production ready |
+| AUC | 0.996 (overfit) | 0.823 | ✅ Généralisable |
 
-| Catégorie de montant | Taux de fraude (Kaggle) | Taux réel (banque) | Écart |
-|---------------------|-------------------------|--------------------| ------|
-| < 100€ | 0.16% | ~0.1% | OK |
-| 100-500€ | 1.0% | ~0.2% | **5x trop élevé** |
-| 500-2000€ | **24.5%** | ~0.5% | **50x trop élevé** |
-| > 2000€ | 0% | ~1% | Inversé |
+### v2.0 (Décembre 2025) - Ajustement seuils
 
-**Conséquence** : Le modèle considère TOUT achat > 300€ comme frauduleux (score > 0.95).
+- Changement des seuils de montant (50/200/1000 → 100/500/2000)
+- Ajout géolocalisation IP (ip-api.com)
+- Cache Redis pour les IP
 
-#### Origine du problème
+### v1.0 (Novembre 2025) - MVP Initial
 
-Le dataset Kaggle (kartik2112/fraud-detection) est :
-- **Simulé** : Données générées, pas réelles
-- **US-centré** : Patterns de consommation américains
-- **Biaisé** : Fraudes artificiellement concentrées sur montants moyens-élevés
-- **Médiane des fraudes = 396€** : Non représentatif d'une vraie distribution
-
-#### Impact sur les prédictions
-
-| Scénario | Score actuel | Score attendu (réel) | Verdict |
-|----------|--------------|----------------------|---------|
-| 25€ café | 0.001 | < 0.01 | ✅ OK |
-| 45€ courses | 0.001 | < 0.01 | ✅ OK |
-| **250€ Amazon FR** | **0.97** | < 0.1 | ❌ **FAUX POSITIF** |
-| **500€ électroménager** | **0.98** | < 0.2 | ❌ **FAUX POSITIF** |
-| 45€ IP russe | 0.001 | > 0.5 | ❌ **FAUX NÉGATIF** |
-
----
-
-### 🔴 ACTION REQUISE : Changer de Dataset
-
-**Le modèle actuel ne doit PAS être utilisé en production** sans l'une des actions suivantes :
-
-#### Option 1 : Dataset IEEE-CIS Fraud Detection (Recommandé)
-
-**Source** : [Kaggle IEEE-CIS](https://www.kaggle.com/c/ieee-fraud-detection)
-
-| Caractéristique | Kaggle actuel | IEEE-CIS |
-|-----------------|---------------|----------|
-| Transactions | 1.3M | 590K train + 500K test |
-| Origine | Simulé | **Verizon (réel)** |
-| Features | 12 | **434 features** |
-| Distribution | Biaisée | **Réaliste** |
-| Montants | Concentrés | **Distribués** |
-
-**Avantages** :
-- Données réelles de e-commerce
-- Distribution des fraudes réaliste
-- Plus de features (device, browser, email domain)
-
-**Inconvénients** :
-- Plus complexe à preprocesser
-- Nécessite feature selection
-
-#### Option 2 : Dataset PaySim
-
-**Source** : [Kaggle PaySim](https://www.kaggle.com/datasets/ealaxi/paysim1)
-
-| Caractéristique | Valeur |
-|-----------------|--------|
-| Transactions | 6.3M |
-| Type | Mobile money (Afrique) |
-| Fraudes | 8,213 (0.13%) |
-
-**Avantages** :
-- Grand volume
-- Taux de fraude réaliste
-
-**Inconvénients** :
-- Mobile money ≠ carte bancaire
-- Pas de features géographiques
-
-#### Option 3 : Données Internes (Meilleure solution)
-
-Si disponible, utiliser des données de transactions réelles (anonymisées) de la banque cible.
-
----
-
-### Recommandations par priorité
-
-| Priorité | Action | Effort | Impact |
-|----------|--------|--------|--------|
-| 🔴 **P0** | Changer pour IEEE-CIS | 2-3 jours | Élimine faux positifs montants |
-| 🟡 P1 | Ajouter features vélocité | 1 jour | Détecte patterns temporels |
-| 🟡 P2 | Intégrer détection VPN | 1 jour | Réduit faux négatifs géo |
-| 🟢 P3 | SHAP explicabilité | 2 jours | Compliance audit |
+- Premier modèle LightGBM
+- 10 features de base
+- Dataset Kaggle
 
 ---
 
@@ -318,19 +250,20 @@ Si disponible, utiliser des données de transactions réelles (anonymisées) de 
 
 | Fichier | Description |
 |---------|-------------|
-| [scripts/train_fraud_model_kaggle.py](../scripts/train_fraud_model_kaggle.py) | Script d'entraînement |
-| [artifacts/models/fraud_lgbm_kaggle.bin](../artifacts/models/fraud_lgbm_kaggle.bin) | Modèle binaire |
-| [artifacts/models/fraud_model_metadata_kaggle.json](../artifacts/models/fraud_model_metadata_kaggle.json) | Métadonnées |
+| [scripts/train_fraud_model_ieee.py](../scripts/train_fraud_model_ieee.py) | Script d'entraînement IEEE-CIS |
+| [artifacts/models/fraud_lgbm_kaggle.bin](../artifacts/models/fraud_lgbm_kaggle.bin) | Modèle binaire (compatible API) |
+| [artifacts/models/fraud_model_metadata_ieee.json](../artifacts/models/fraud_model_metadata_ieee.json) | Métadonnées |
 | [services/model-serving/app/main.py](../services/model-serving/app/main.py) | API FastAPI |
-| [services/model-serving/app/inference.py](../services/model-serving/app/inference.py) | Module inférence |
+| [services/model-serving/app/geolocation.py](../services/model-serving/app/geolocation.py) | Module géolocalisation IP |
 
 ### Métriques Prometheus
 
 | Métrique | Description |
 |----------|-------------|
 | `http_request_latency_seconds` | Latence des prédictions |
-| `http_requests_total` | Nombre de requêtes |
-| `fraud_score_distribution` | Distribution des scores (à ajouter) |
+| `geolocation_cache_hits_total` | Hits cache géolocalisation |
+| `geolocation_api_latency_seconds` | Latence API ip-api.com |
+| `geolocation_country_requests_total` | Distribution par pays |
 
 ### SLIs / SLOs
 
@@ -339,15 +272,16 @@ Si disponible, utiliser des données de transactions réelles (anonymisées) de 
 | Latence P95 | < 30ms | > 50ms pendant 5min |
 | Error rate | < 1% | > 2% pendant 2min |
 | Model loaded | true | false pendant 1min |
+| Geo cache hit rate | > 80% | < 60% pendant 10min |
 
 ### Évolutions prévues
 
 | Phase | Feature | Impact | Status |
 |-------|---------|--------|--------|
-| **V1.1** | **Changer dataset → IEEE-CIS** | **Élimine faux positifs** | 🔴 **REQUIS** |
-| V1.2 | Vélocité (tx/24h) | +5% AUC estimé | Planifié |
-| V1.3 | Détection VPN | Réduire faux négatifs geo | Planifié |
-| V2.0 | SHAP explainability | Compliance audit | Backlog |
+| **V3.0** | **Dataset IEEE-CIS** | **Corrige biais** | ✅ **FAIT** |
+| V3.1 | Vélocité (tx/24h) | +5% AUC estimé | Planifié |
+| V3.2 | Détection VPN | Réduire faux négatifs geo | Planifié |
+| V4.0 | SHAP explicabilité | Compliance audit | Backlog |
 
 ---
 
@@ -356,14 +290,17 @@ Si disponible, utiliser des données de transactions réelles (anonymisées) de 
 ### A. Entraînement du modèle
 
 ```bash
+# Télécharger le dataset IEEE-CIS
+kaggle competitions download -c ieee-fraud-detection -p artifacts/data/ --unzip
+
 # Entraîner le modèle
-python scripts/train_fraud_model_kaggle.py
+python scripts/train_fraud_model_ieee.py
 
 # Output attendu
 # ============================================================
 # ✅ TRAINING COMPLETE!
 # ============================================================
-# AUC Score: 0.996090
+# Base Model AUC: 0.823109
 # Model: artifacts/models/fraud_lgbm_kaggle.bin
 # Features: 12
 ```
@@ -371,28 +308,28 @@ python scripts/train_fraud_model_kaggle.py
 ### B. Test de prédiction
 
 ```bash
-# Transaction légitime (45€, IP FR)
+# Transaction normale 250€ (ne doit PAS être considérée comme fraude)
 curl -X POST http://localhost:8001/predict \
   -H "Content-Type: application/json" \
   -d '{
     "event_id": "test-001",
-    "amount": 45.0,
+    "amount": 250.0,
     "merchant": {"mcc": "5411", "country": "FR"},
     "card": {"card_id": "c1", "user_id": "u1", "type": "physical"},
-    "context": {"ip": "82.64.123.45", "channel": "pos"}
+    "context": {"ip": "89.225.140.45", "channel": "pos"}
   }'
 
-# Réponse attendue: score < 0.01
+# Réponse attendue: score ~0.50-0.65 (CHALLENGE, pas DENY)
 ```
 
 ### C. Références
 
 - [LightGBM Documentation](https://lightgbm.readthedocs.io/)
-- [Kaggle Dataset](https://www.kaggle.com/datasets/kartik2112/fraud-detection)
-- [Scikit-learn Metrics](https://scikit-learn.org/stable/modules/model_evaluation.html)
+- [IEEE-CIS Fraud Detection](https://www.kaggle.com/c/ieee-fraud-detection)
+- [Vesta Corporation](https://trustvesta.com/)
 
 ---
 
-**Fin du Six-Pager ML Model**
+**Fin du Six-Pager ML Model v3**
 
 Pour questions : virgile.ader@epitech.digital

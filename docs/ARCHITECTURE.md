@@ -1,8 +1,8 @@
-# Architecture Technique - FraudGuard AI
+# Architecture Technique - SafeGuard AI
 
 ## 🎯 Vision
 
-**FraudGuard AI** est un moteur antifraude temps réel qui analyse chaque paiement par carte en **moins de 100ms** et décide : **ALLOW** (autoriser), **CHALLENGE** (vérifier avec 2FA si nécessaire), ou **DENY** (bloquer).
+**SafeGuard AI** est un moteur safeguarde temps réel qui analyse chaque paiement par carte en **moins de 100ms** et décide : **ALLOW** (autoriser), **CHALLENGE** (vérifier avec 2FA si nécessaire), ou **DENY** (bloquer).
 
 ### Objectifs clés
 

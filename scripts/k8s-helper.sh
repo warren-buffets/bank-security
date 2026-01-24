@@ -1,5 +1,5 @@
 #!/bin/bash
-# FraudGuard AI - Kubernetes Helper Script
+# SafeGuard AI - Kubernetes Helper Script
 # Usage: ./scripts/k8s-helper.sh [command]
 
 set -e
@@ -7,7 +7,7 @@ set -e
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$PROJECT_ROOT"
 
-NAMESPACE="${K8S_NAMESPACE:-fraudguard}"
+NAMESPACE="${K8S_NAMESPACE:-safeguard}"
 CONTEXT="${K8S_CONTEXT:-}"
 
 # Colors
@@ -36,11 +36,11 @@ apply_manifests() {
 
 # Deploy with Helm
 helm_install() {
-    local release_name=${1:-fraudguard}
-    local values_file=${2:-deploy/helm/fraudguard/values.yaml}
+    local release_name=${1:-safeguard}
+    local values_file=${2:-deploy/helm/safeguard/values.yaml}
 
     log_info "Installing/upgrading Helm release: $release_name"
-    helm upgrade --install "$release_name" deploy/helm/fraudguard \
+    helm upgrade --install "$release_name" deploy/helm/safeguard \
         --namespace "$NAMESPACE" \
         --create-namespace \
         -f "$values_file" \
@@ -51,7 +51,7 @@ helm_install() {
 
 # Uninstall Helm release
 helm_uninstall() {
-    local release_name=${1:-fraudguard}
+    local release_name=${1:-safeguard}
     log_info "Uninstalling Helm release: $release_name"
     helm uninstall "$release_name" --namespace "$NAMESPACE"
     log_success "Helm release removed."
@@ -65,7 +65,7 @@ pods() {
 
 # Get all resources
 status() {
-    log_info "FraudGuard status in namespace $NAMESPACE:"
+    log_info "SafeGuard status in namespace $NAMESPACE:"
     echo ""
     echo "=== Deployments ==="
     kubectl get deployments -n "$NAMESPACE"
@@ -190,7 +190,7 @@ metrics() {
 
 # Show help
 help() {
-    echo "FraudGuard AI - Kubernetes Helper"
+    echo "SafeGuard AI - Kubernetes Helper"
     echo ""
     echo "Usage: $0 [command] [args]"
     echo ""
