@@ -1,0 +1,112 @@
+@startuml SafeGuard Container Diagram
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+LAYOUT_TOP_DOWN()
+
+title SafeGuard Financial - Diagramme de Conteneurs (C4 Level 2)
+
+Person(psp, "PSP", "Payment Service Provider")
+Person(alice, "Alice", "Analyste Fraude")
+Person(marc, "Marc", "Ops/IT")
+
+System_Boundary(safeguard, "SafeGuard Financial") {
+    Container(decision_engine, "Decision Engine", "FastAPI Python", "Orchestrateur principal, fusion des scores, SCA dynamique")
+    Container(model_serving, "Model Serving", "FastAPI Python", "Service ML LightGBM, scoring de fraude")
+    Container(rules_service, "Rules Service", "FastAPI Python", "Moteur de règles déterministes (11 règles)")
+    Container(case_service, "Case Service", "FastAPI Python", "Gestion des cas de fraude")
+    Container(case_ui, "Case Management UI", "Streamlit", "Interface analyste (queues high/medium/low)")
+
+    ContainerDb(postgres, "PostgreSQL", "Database", "Transactions, audit logs HMAC, DPIA, SCA challenges")
+    ContainerDb(redis, "Redis", "Cache", "Velocity tracking, deny/allow lists")
+    Container(kafka, "Kafka", "Message Broker", "Communication asynchrone, résultats de scoring")
+
+    Container(prometheus, "Prometheus", "Monitoring", "Métriques temps réel")
+    Container(grafana, "Grafana", "Dashboards", "4 dashboards: Overview, Analyst, Friction, Geographic")
+}
+
+Rel(psp, decision_engine, "POST /v1/score", "HTTPS/JSON")
+Rel(decision_engine, model_serving, "POST /predict", "HTTP")
+Rel(decision_engine, rules_service, "POST /evaluate", "HTTP")
+Rel(decision_engine, postgres, "Store audit logs", "asyncpg")
+Rel(decision_engine, redis, "Track velocity", "Redis protocol")
+Rel(decision_engine, kafka, "Publish results", "Kafka producer")
+
+Rel(model_serving, postgres, "Read features")
+Rel(rules_service, postgres, "Read rules")
+
+Rel(kafka, case_service, "Consume results", "Kafka consumer")
+Rel(case_service, postgres, "Store cases")
+
+Rel(alice, case_ui, "Review alerts", "HTTPS")
+Rel(case_ui, postgres, "Read cases")
+
+Rel(marc, grafana, "View metrics", "HTTPS")
+Rel(grafana, prometheus, "Query metrics", "PromQL")
+Rel(grafana, postgres, "Query analytics", "SQL")
+
+Rel(decision_engine, prometheus, "Export metrics", "/metrics")
+Rel(model_serving, prometheus, "Export metrics", "/metrics")
+Rel(rules_service, prometheus, "Export metrics", "/metrics")
+
+note right of decision_engine
+  **Fonctions:**
+  - Orchestration parallèle
+  - Fusion scores (ML + Règles)
+  - SCA dynamique (5 niveaux)
+  - Audit logs HMAC-SHA256
+  - Velocity tracking
+
+  **Ports:** 8000
+end note
+
+note right of model_serving
+  **Modèle:** LightGBM
+  **Features:** 28 variables
+  - Géolocalisation IP
+  - Montant normalisé
+  - Features temporelles
+  - Distance géographique
+
+  **Ports:** 8001
+end note
+
+note right of rules_service
+  **Règles:** 11 rules
+  - Montant > 5000€
+  - Pays à risque
+  - Nocturne (22h-6h)
+  - Velocity (>3 tx/h)
+  - Deny/Allow lists
+
+  **Ports:** 8003
+end note
+
+note right of postgres
+  **Tables principales:**
+  - transactions
+  - audit_logs (WORM)
+  - sca_challenges
+  - dpia_logs
+  - rules
+
+  **Conformité:**
+  - HMAC-SHA256 signature
+  - Rétention 7 ans
+  - RGPD anonymisation 90j
+end note
+
+note right of case_ui
+  **Queues:**
+  - 🔴 High Risk (≥0.7)
+  - 🟡 Medium Risk (0.3-0.7)
+  - 🟢 Low Risk (<0.3)
+
+  **Actions:**
+  - Confirm Fraud
+  - False Positive
+  - Escalate
+
+  **Port:** 8501
+end note
+
+@enduml
