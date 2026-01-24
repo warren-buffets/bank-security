@@ -68,7 +68,11 @@ df['is_international'] = 0  # All US in this dataset
 # Derived features
 df['is_night'] = ((df['trans_hour'] >= 23) | (df['trans_hour'] <= 5)).astype(int)
 df['is_weekend'] = (df['trans_day'] >= 5).astype(int)
-df['amount_category'] = pd.cut(df['amt'], bins=[0, 50, 200, 1000, np.inf], labels=[0, 1, 2, 3]).astype(int)
+
+# Amount categories adjusted for European banking context
+# Old thresholds [50, 200, 1000] were too aggressive (300€ = fraud)
+# New thresholds [100, 500, 2000] are more realistic for legitimate purchases
+df['amount_category'] = pd.cut(df['amt'], bins=[0, 100, 500, 2000, np.inf], labels=[0, 1, 2, 3]).astype(int)
 
 # Distance between user and merchant (fraud indicator)
 def haversine_distance(lat1, lon1, lat2, lon2):

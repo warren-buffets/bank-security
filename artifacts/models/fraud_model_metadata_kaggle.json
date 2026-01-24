@@ -1,12 +1,12 @@
 {
   "model_version": "fraud_lgbm_kaggle_v1",
-  "trained_at": "2026-01-16T16:10:24.543896",
+  "trained_at": "2026-01-22T13:42:51.197232",
   "dataset": "kaggle_kartik2112",
   "n_samples": 1296675,
   "n_train": 1037340,
   "n_test": 259335,
   "fraud_rate": 0.005788651743883394,
-  "auc_score": 0.9955678556939608,
+  "auc_score": 0.9960903708983553,
   "feature_names": [
     "amt",
     "trans_hour",
@@ -24,47 +24,47 @@
   "feature_importance": [
     {
       "feature": "amount_category",
-      "importance": 41199603.47342682
+      "importance": 29966807.270591736
     },
     {
       "feature": "trans_hour",
-      "importance": 9658889.645721436
-    },
-    {
-      "feature": "amt",
-      "importance": 3397211.512512207
-    },
-    {
-      "feature": "merchant_mcc",
-      "importance": 1688494.8336105347
-    },
-    {
-      "feature": "card_type",
-      "importance": 1152963.1645050049
-    },
-    {
-      "feature": "city_pop",
-      "importance": 689593.6533813477
-    },
-    {
-      "feature": "trans_day",
-      "importance": 180021.30417633057
-    },
-    {
-      "feature": "distance_category",
-      "importance": 17754.456832885742
-    },
-    {
-      "feature": "channel",
-      "importance": 15598.916397094727
+      "importance": 8483786.14528656
     },
     {
       "feature": "is_night",
-      "importance": 6787.262893676758
+      "importance": 6364611.395309448
+    },
+    {
+      "feature": "amt",
+      "importance": 4883034.525848389
+    },
+    {
+      "feature": "merchant_mcc",
+      "importance": 1774667.5003356934
+    },
+    {
+      "feature": "card_type",
+      "importance": 1556974.6779327393
+    },
+    {
+      "feature": "city_pop",
+      "importance": 726886.0621871948
+    },
+    {
+      "feature": "trans_day",
+      "importance": 152446.9815750122
+    },
+    {
+      "feature": "channel",
+      "importance": 8966.466064453125
+    },
+    {
+      "feature": "distance_category",
+      "importance": 6834.565933227539
     },
     {
       "feature": "is_weekend",
-      "importance": 5524.477020263672
+      "importance": 5125.197891235352
     },
     {
       "feature": "is_international",
