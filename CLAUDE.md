@@ -1,5 +1,31 @@
 # SafeGuard - Instructions pour Claude
 
+---
+
+## RÈGLES OBLIGATOIRES (NE JAMAIS IGNORER)
+
+### Commits et Pull Requests
+- **NE JAMAIS ajouter "Co-Authored-By: Claude" dans les commits**
+- **NE JAMAIS mentionner Claude/AI dans les messages de commit**
+- **NE JAMAIS signer les PRs avec une mention de Claude ou Anthropic**
+- **NE JAMAIS ajouter de footer "Generated with Claude Code" dans les PRs**
+- Les commits doivent paraître écrits par l'utilisateur uniquement
+- Utiliser des messages de commit simples en style "conventional commits" sans attribution
+
+### Exemple de commit correct
+```bash
+git commit -m "feat: Add user authentication"
+```
+
+### Exemple de commit INTERDIT
+```bash
+git commit -m "feat: Add user authentication
+
+Co-Authored-By: Claude <noreply@anthropic.com>"
+```
+
+---
+
 ## Projet
 **SafeGuard** - Plateforme de détection de fraude bancaire en temps réel avec architecture microservices.
 
