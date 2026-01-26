@@ -50,3 +50,7 @@ gha-creds-*.json
 
 # Kaggle
 .kaggle/
+
+# Notes internes
+docs/POINT_PROFESSEURS.md
+docs/soutenance.md
