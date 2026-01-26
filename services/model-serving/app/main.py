@@ -68,7 +68,7 @@ def calculate_distance_category(distance_km: float) -> int:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan manager."""
-    logger.info("Starting FraudGuard Model Serving service - Kaggle model")
+    logger.info("Starting SafeGuard Model Serving service - Kaggle model")
     logger.info(f"Model path: {settings.model_path}")
 
     try:
@@ -79,11 +79,11 @@ async def lifespan(app: FastAPI):
 
     yield
 
-    logger.info("Shutting down FraudGuard Model Serving service")
+    logger.info("Shutting down SafeGuard Model Serving service")
 
 
 app = FastAPI(
-    title="FraudGuard AI - Model Serving",
+    title="SafeGuard AI - Model Serving",
     description="Real-time fraud detection model inference API (Kaggle model)",
     version="2.0.0",
     lifespan=lifespan
@@ -108,7 +108,7 @@ async def add_metrics_middleware(request: Request, call_next):
 
 
 @app.get("/", tags=["Info"])
-async def root() -> Dict[str, str]:
+async def root():
     """Root endpoint with service information."""
     return {
         "service": settings.service_name,

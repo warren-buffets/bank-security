@@ -56,7 +56,7 @@ The Case Service is designed to run as part of the larger `bank-security` system
         - "8002:8000" # Map host port 8002 to container port 8000
       environment:
         # Example: DATABASE_URL should match your postgres service in docker-compose
-        DATABASE_URL: "postgresql+asyncpg://postgres:postgres@postgres:5432/fraudguard"
+        DATABASE_URL: "postgresql+asyncpg://postgres:postgres@postgres:5432/safeguard"
         KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
         KAFKA_TOPIC_DECISION_EVENTS: "decision_events"
       depends_on:

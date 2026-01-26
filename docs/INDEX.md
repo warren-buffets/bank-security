@@ -1,171 +1,138 @@
-# Documentation FraudGuard AI - Index
+# SafeGuard - Documentation Index
 
-## 🎯 Document Principal : Six-Pager
+**Plateforme de détection de fraude bancaire en temps réel**
 
-### [SIX_PAGER.md](SIX_PAGER.md) ⭐ **DOCUMENT DE RÉFÉRENCE**
+---
+
+## Navigation Rapide
+
+| Objectif | Document |
+|----------|----------|
+| Comprendre le projet en 5 min | [GUIDE-RAPIDE.md](GUIDE-RAPIDE.md) |
+| Présentation complète (soutenance) | [SIX_PAGER.md](SIX_PAGER.md) |
+| Architecture technique | [ARCHITECTURE.md](ARCHITECTURE.md) |
+| Flux de données | [FLUX-DONNEES.md](FLUX-DONNEES.md) |
+| Modèle ML (IEEE-CIS) | [SIX_PAGER_ML_MODEL.md](SIX_PAGER_ML_MODEL.md) |
+| API Reference | [api/openapi.yaml](api/openapi.yaml) |
+
+---
+
+## 1. Documents Stratégiques (Six-Pagers)
+
+### [SIX_PAGER.md](SIX_PAGER.md) - Document Principal
 **Six-Pager Technique complet** (format Amazon/Microsoft)
-- Résumé exécutif (problème, solution, résultats attendus)
-- Contexte & principes (contraintes, exigences, tenets)
-- Design proposé (architecture, flux, choix techniques)
-- Alternatives évaluées (options rejetées, trade-offs)
-- Risques & mitigations (dépendances, fallbacks)
-- Plan & métriques (phasage, OKRs, SLAs, coûts)
+- Résumé exécutif, contexte, design proposé
+- Alternatives évaluées, risques, plan de déploiement
+- **Document de soutenance**
 
-👉 **Document de soutenance - À lire en priorité**
+### [SIX_PAGER_ML_MODEL.md](SIX_PAGER_ML_MODEL.md) - Modèle ML v3
+**Modèle LightGBM entraîné sur IEEE-CIS**
+- Dataset Vesta Corporation (590K transactions réelles)
+- 12 features incluant géolocalisation IP
+- AUC 0.823 (distribution équilibrée)
+- Historique des versions (v1 → v3)
 
----
-
-## 📚 Documents principaux (3 fichiers essentiels)
-
-### 1. [GUIDE-RAPIDE.md](GUIDE-RAPIDE.md) ⭐ COMMENCER ICI
-**Démarrage en 3 minutes**
-- Vue d'ensemble du système
-- Comment ça marche (3 décisions : ALLOW/CHALLENGE/DENY)
-- Logique CHALLENGE + 2FA
-- Installation rapide
-- Métriques clés
-- FAQ
-
-👉 **Lire en premier** pour comprendre le projet
+### [SIX_PAGER_IP_GEOLOCATION.md](SIX_PAGER_IP_GEOLOCATION.md) - Géolocalisation IP
+**Feature IP avec ip-api.com**
+- Cache Redis (TTL 24h)
+- Calcul distance Haversine
+- Métriques Prometheus
 
 ---
 
-### 2. [ARCHITECTURE.md](ARCHITECTURE.md) 🏗️ TECHNIQUE
-**Architecture technique complète**
-- Composants principaux (Decision Engine, Model Serving, Rules...)
-- Logique de décision détaillée
-- Schéma données (tables principales)
-- Machine Learning (GBDT, features, pipeline)
-- Budget latence (P95 < 100ms)
-- Sécurité et conformité (RGPD, PSD2)
-- Workflow analystes
-- Déploiement (Docker Compose, Kubernetes)
-- Métriques et KPIs
+## 2. Documentation Technique
 
-👉 **Pour comprendre** l'architecture et les choix techniques
+### [ARCHITECTURE.md](ARCHITECTURE.md)
+Architecture technique complète
+- 4 microservices (Decision Engine, Model Serving, Rules, Case)
+- Logique de décision (ALLOW/CHALLENGE/DENY)
+- Budget latence P95 < 100ms
 
----
-
-### 3. [FLUX-DONNEES.md](FLUX-DONNEES.md) 🔄 FLUX
-**Tous les flux de données**
-- Flux 1 : Scoring temps réel (synchrone < 100ms)
-- Flux 2 : Case Management (asynchrone)
-- Flux 3 : Feature Store (temps réel)
-- Flux 4 : ML Training Pipeline (offline)
-- Flux 5 : Observabilité (monitoring)
-- Volumétrie et performance
-- Patterns utilisés (Event Sourcing, CQRS, Circuit Breaker...)
-
-👉 **Pour comprendre** comment les données circulent
-
----
-
-## 📊 Métriques & Choix Techniques
-
-### [METRICS.md](METRICS.md) 📈
-**KPI et Métriques ML**
-- AUC-ROC (objectif ≥ 0.94)
-- Taux de faux positifs (FPR < 2%)
-- Calibration du modèle (Platt Scaling, Isotonic Regression)
-- Métriques business (Precision, Recall, F1)
-- Métriques opérationnelles (P95, P99, throughput)
-- Dashboard de monitoring
-
-### [IP_GEOLOCATION.md](IP_GEOLOCATION.md) 🌍
-**Géolocalisation IP - Choix Technique**
-- Problématique (performance, RGPD, précision)
-- Option 1: Hash IP seul (anonymisation)
-- Option 2: WHOIS/GeoIP (enrichissement)
-- **Solution retenue**: Approche hybride (Hash + GeoLite2)
-- Features ML extraites (pays, région, ASN, distance)
-- Implémentation et performance
-- RGPD compliance
-
----
-
-## 🏗️ Architecture Decision Records (ADR)
-
-### [adr/README.md](adr/README.md)
-**Index des décisions architecturales**
-
-#### ADRs Disponibles:
-- [ADR-001: Architecture Microservices](adr/001-microservices-architecture.md)
-- [ADR-002: Redis pour l'Idempotence](adr/002-redis-idempotency.md)
-- [ADR-003: Moteur de Règles avec DSL](adr/003-rules-engine-dsl.md)
-
-Chaque ADR documente :
-- Contexte et problème
-- Décision retenue
-- Conséquences (positives/négatives)
-- Alternatives évaluées et rejetées
-
----
-
-## 📄 Documents complémentaires
+### [FLUX-DONNEES.md](FLUX-DONNEES.md)
+5 flux de données documentés
+- Scoring temps réel (synchrone)
+- Case Management (asynchrone)
+- Feature Store, ML Training, Observabilité
 
 ### [database-schema.md](database-schema.md)
-Schéma détaillé base de données PostgreSQL
-- Tables : events, decisions, cases, labels, rules, lists
-- Index et contraintes
+Schéma PostgreSQL
+- Tables: events, decisions, cases, rules, lists
+- Migrations V001-V005
 - Volumétrie estimée
-- Scripts SQL
 
-### [api/openapi.yaml](api/openapi.yaml)
-Spécification API complète (OpenAPI 3.0)
-- Endpoint POST /v1/score
-- Schémas requête/réponse
-- Exemples
+### [METRICS.md](METRICS.md)
+Métriques ML et opérationnelles
+- AUC-ROC, FPR, Precision, Recall
+- Latence P95/P99, throughput
 
-### [MAKEFILE_GUIDE.md](MAKEFILE_GUIDE.md) 🛠️
-**Guide complet du Makefile**
-- Commandes Docker (up, down, logs, rebuild)
-- Commandes Database (migrate, reset, stats)
-- Commandes Kafka, Redis, ML
-- Workflows complets
+---
 
-### [SCRIPTS_GUIDE.md](SCRIPTS_GUIDE.md) 📜
-**Guide des 7 scripts helper**
+## 3. Architecture Decision Records (ADR)
+
+| ADR | Sujet |
+|-----|-------|
+| [ADR-001](adr/001-microservices-architecture.md) | Architecture Microservices |
+| [ADR-002](adr/002-redis-idempotency.md) | Redis pour l'Idempotence |
+| [ADR-003](adr/003-rules-engine-dsl.md) | Moteur de Règles DSL |
+
+---
+
+## 4. Guides Opérationnels
+
+### [GUIDE-RAPIDE.md](GUIDE-RAPIDE.md)
+Démarrage en 3 minutes
+- Installation Docker
+- Test de l'API
+- Comprendre les 3 décisions
+
+### [MAKEFILE_GUIDE.md](MAKEFILE_GUIDE.md)
+Commandes Makefile
+- `make up`, `make down`, `make logs`
+- `make db-migrate`, `make ml-train`
+
+### [SCRIPTS_GUIDE.md](SCRIPTS_GUIDE.md)
+7 scripts helper
 - db-helper.sh, docker-helper.sh, k8s-helper.sh
 - kafka-helper.sh, ml-helper.sh, redis-helper.sh
-- retrain.sh (ré-entraînement automatique)
+
+### [IP_GEOLOCATION.md](IP_GEOLOCATION.md)
+Choix technique géolocalisation
+- Comparaison des options
+- Solution retenue (ip-api.com + cache)
 
 ---
 
-## 🚀 Par où commencer ?
+## 5. API
 
-### Je découvre le projet
-→ **[GUIDE-RAPIDE.md](GUIDE-RAPIDE.md)**
+### [api/openapi.yaml](api/openapi.yaml)
+Spécification OpenAPI 3.0 complète
 
-### Je veux comprendre l'architecture
-→ **[ARCHITECTURE.md](ARCHITECTURE.md)**
-
-### Je veux voir les flux de données
-→ **[FLUX-DONNEES.md](FLUX-DONNEES.md)**
-
-### Je veux le schéma BDD
-→ **[database-schema.md](database-schema.md)**
-
-### Je veux l'API
-→ **[api/openapi.yaml](api/openapi.yaml)**
+### [api/example-requests.md](api/example-requests.md)
+Exemples de requêtes/réponses
 
 ---
 
-## 🎯 Résumé ultra-rapide
+## 6. Services
 
-**FraudGuard AI** = Moteur antifraude temps réel
+| Service | Port | Documentation |
+|---------|------|---------------|
+| Decision Engine | 8000 | [README](../services/decision-engine/README.md) |
+| Model Serving | 8001 | [README](../services/model-serving/README.md) |
+| Rules Service | 8003 | [README](../services/rules-service/README.md) |
+| Case Service | 8002 | [README](../services/case-service/README.md) |
 
-**3 décisions** :
-- ✅ **ALLOW** : Score < 0.50 → Transaction passe
-- ⚠️ **CHALLENGE** : Score 0.50-0.70 → 2FA si nécessaire
-- ❌ **DENY** : Score > 0.70 → Blocage
+---
 
-**Performances** :
-- P95 < 100ms
-- 94% détection
-- < 2% faux positifs
+## Résumé
 
-**Stack** :
-- Python FastAPI + LightGBM/XGBoost
-- PostgreSQL + Redis + Kafka
-- Prometheus + Grafana
+**SafeGuard** = Détection de fraude temps réel
 
+| Décision | Condition | Action |
+|----------|-----------|--------|
+| ALLOW | Score < 0.50 | Transaction autorisée |
+| CHALLENGE | Score 0.50-0.70 | Demande 2FA |
+| DENY | Score > 0.70 | Transaction bloquée |
+
+**Stack**: Python FastAPI, LightGBM, PostgreSQL, Redis, Kafka, Prometheus
+
+**Modèle ML v3**: Dataset IEEE-CIS (Vesta), AUC 0.823, 12 features

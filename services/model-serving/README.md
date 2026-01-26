@@ -1,4 +1,4 @@
-# FraudGuard AI - Model Serving Service
+# SafeGuard AI - Model Serving Service
 
 Real-time fraud detection model inference service built with FastAPI and LightGBM.
 
@@ -47,12 +47,12 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000
 
 1. Build the image:
 ```bash
-docker build -t fraudguard-model-serving:latest .
+docker build -t safeguard-model-serving:latest .
 ```
 
 2. Run the container:
 ```bash
-docker run -d -p 8000:8000 -v /path/to/models:/models fraudguard-model-serving:latest
+docker run -d -p 8000:8000 -v /path/to/models:/models safeguard-model-serving:latest
 ```
 
 ## Configuration
@@ -68,4 +68,4 @@ Environment variables with prefix MODEL_SERVING_:
 
 ## License
 
-Copyright 2025 FraudGuard AI
+Copyright 2025 SafeGuard AI

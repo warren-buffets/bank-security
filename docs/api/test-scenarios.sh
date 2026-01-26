@@ -1,9 +1,9 @@
 #!/bin/bash
-# Test scenarios for antifraud API
+# Test scenarios for safeguard API
 
 API_URL="${API_URL:-http://localhost:8000}"
 
-echo "🧪 Testing Antifraud API..."
+echo "🧪 Testing SafeGuard API..."
 echo "API URL: $API_URL"
 echo ""
 

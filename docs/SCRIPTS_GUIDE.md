@@ -1,4 +1,4 @@
-# Guide des Scripts Helper - FraudGuard
+# Guide des Scripts Helper - SafeGuard
 
 Ce guide explique l'utilité de tous les scripts shell présents dans le dossier [scripts/](../scripts/).
 

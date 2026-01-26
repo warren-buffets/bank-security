@@ -1,11 +1,9 @@
-version: '3.9'
-
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: antifraud-postgres
+    container_name: safeguard-postgres
     environment:
-      POSTGRES_DB: antifraud
+      POSTGRES_DB: safeguard
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres_dev
     volumes:
@@ -23,7 +21,7 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: antifraud-redis
+    container_name: safeguard-redis
     command: redis-server --appendonly yes --maxmemory 2gb --maxmemory-policy allkeys-lru
     volumes:
       - redis_data:/data
@@ -39,7 +37,7 @@ services:
 
   kafka:
     image: confluentinc/cp-kafka:7.6.0
-    container_name: antifraud-kafka
+    container_name: safeguard-kafka
     environment:
       KAFKA_NODE_ID: 1
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
@@ -63,7 +61,7 @@ services:
 
   prometheus:
     image: prom/prometheus:latest
-    container_name: antifraud-prometheus
+    container_name: safeguard-prometheus
     volumes:
       - ./platform/observability/prometheus.yml:/etc/prometheus/prometheus.yml
       - prometheus_data:/prometheus
@@ -77,7 +75,7 @@ services:
 
   grafana:
     image: grafana/grafana:latest
-    container_name: antifraud-grafana
+    container_name: safeguard-grafana
     environment:
       GF_SECURITY_ADMIN_PASSWORD: admin
       GF_USERS_ALLOW_SIGN_UP: false
@@ -87,11 +85,18 @@ services:
       - grafana_data:/var/lib/grafana
     ports:
       - "3000:3000"
+    networks:
+      - net_app
+      - net_data
+    depends_on:
+      - prometheus
+      - postgres
+
   model-serving:
     build:
       context: ./services/model-serving
       dockerfile: Dockerfile
-    container_name: antifraud-model-serving
+    container_name: safeguard-model-serving
     environment:
       - SERVICE_NAME=model-serving
       - LOG_LEVEL=INFO
@@ -112,13 +117,13 @@ services:
     build:
       context: ./services/rules-service
       dockerfile: Dockerfile
-    container_name: antifraud-rules-service
+    container_name: safeguard-rules-service
     environment:
       - SERVICE_NAME=rules-service
       - LOG_LEVEL=INFO
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
-      - POSTGRES_DB=antifraud
+      - POSTGRES_DB=safeguard
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres_dev
       - REDIS_HOST=redis
@@ -138,13 +143,13 @@ services:
     build:
       context: ./services/decision-engine
       dockerfile: Dockerfile
-    container_name: antifraud-decision-engine
+    container_name: safeguard-decision-engine
     environment:
       - SERVICE_NAME=decision-engine
       - LOG_LEVEL=INFO
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
-      - POSTGRES_DB=antifraud
+      - POSTGRES_DB=safeguard
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres_dev
       - REDIS_HOST=redis
@@ -167,6 +172,41 @@ services:
         condition: service_started
       rules-service:
         condition: service_started
+
+  case-service:
+    build:
+      context: ./services/case-service
+      dockerfile: Dockerfile
+    container_name: safeguard-case-service
+    environment:
+      - SERVICE_NAME=case-service
+      - LOG_LEVEL=INFO
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres_dev@postgres:5432/safeguard
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+    ports:
+      - "8004:8002"
+    networks:
+      - net_app
+      - net_data
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+
+  case-ui:
+    build:
+      context: ./services/case-ui
+      dockerfile: Dockerfile
+    container_name: safeguard-case-ui
+    ports:
+      - "8501:8501"
+    networks:
+      - net_app
+      - net_data
+    depends_on:
+      - kafka
+      - case-service
 
 networks:
   net_front:

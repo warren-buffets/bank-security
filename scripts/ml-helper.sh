@@ -1,5 +1,5 @@
 #!/bin/bash
-# FraudGuard AI - ML Model Helper Script
+# SafeGuard AI - ML Model Helper Script
 # Usage: ./scripts/ml-helper.sh [command]
 
 set -e
@@ -176,7 +176,7 @@ EOF
 
 # Show help
 help() {
-    echo "FraudGuard AI - ML Model Helper"
+    echo "SafeGuard AI - ML Model Helper"
     echo ""
     echo "Usage: $0 [command]"
     echo ""

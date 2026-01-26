@@ -1,11 +1,11 @@
 #!/bin/bash
-# FraudGuard AI - Kafka Helper Script
+# SafeGuard AI - Kafka Helper Script
 # Usage: ./scripts/kafka-helper.sh [command]
 
 set -e
 
 KAFKA_BOOTSTRAP="${KAFKA_BOOTSTRAP_SERVERS:-localhost:9092}"
-KAFKA_CONTAINER="${KAFKA_CONTAINER:-antifraud-kafka}"
+KAFKA_CONTAINER="${KAFKA_CONTAINER:-safeguard-kafka}"
 
 # Colors
 RED='\033[0;31m'
@@ -89,9 +89,9 @@ consumer_lag() {
         --describe --group "$group"
 }
 
-# Setup FraudGuard topics
+# Setup SafeGuard topics
 setup_topics() {
-    log_info "Setting up FraudGuard Kafka topics..."
+    log_info "Setting up SafeGuard Kafka topics..."
     create_topic "decision_events" 3 1
     create_topic "case_events" 3 1
     create_topic "audit_events" 3 1
@@ -101,7 +101,7 @@ setup_topics() {
 
 # Show help
 help() {
-    echo "FraudGuard AI - Kafka Helper"
+    echo "SafeGuard AI - Kafka Helper"
     echo ""
     echo "Usage: $0 [command] [args]"
     echo ""
@@ -110,7 +110,7 @@ help() {
     echo "  create_topic [name] [p]  Create topic (default 3 partitions)"
     echo "  describe_topic [name]    Describe topic"
     echo "  delete_topic [name]      Delete topic"
-    echo "  setup_topics             Create all FraudGuard topics"
+    echo "  setup_topics             Create all SafeGuard topics"
     echo ""
     echo "Messages:"
     echo "  consume [topic] [n]      Consume n messages (default: 10)"

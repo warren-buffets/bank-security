@@ -1,6 +1,8 @@
 """ML inference engine for fraud detection."""
 import time
 import logging
+import pickle
+import os
 from typing import List, Optional
 import numpy as np
 import lightgbm as lgb
@@ -39,24 +41,38 @@ MODEL_LOAD_TIME = Gauge(
 
 class ModelInference:
     """Handles model loading and inference."""
-    
+
     def __init__(self, model_path: Optional[str] = None):
         """Initialize the inference engine.
-        
+
         Args:
             model_path: Path to the LightGBM model file
         """
         self.model_path = model_path or settings.model_path
         self.model: Optional[lgb.Booster] = None
-        self.model_version = "gbdt_v1"
+        self.calibrator = None  # Platt scaling calibrator
+        self.model_version = "gbdt_v2_calibrated"
         self.feature_names = settings.expected_features
-        
+
     def load_model(self) -> None:
-        """Load the LightGBM model from disk."""
+        """Load the LightGBM model and calibrator from disk."""
         start_time = time.time()
         try:
             logger.info(f"Loading model from {self.model_path}")
             self.model = lgb.Booster(model_file=self.model_path)
+
+            # Try to load calibrator if available
+            calibrator_path = os.path.join(
+                os.path.dirname(self.model_path),
+                'score_calibrator.pkl'
+            )
+            if os.path.exists(calibrator_path):
+                with open(calibrator_path, 'rb') as f:
+                    self.calibrator = pickle.load(f)
+                logger.info(f"Calibrator loaded from {calibrator_path}")
+            else:
+                logger.warning(f"No calibrator found at {calibrator_path}, using raw scores")
+
             load_time = time.time() - start_time
             MODEL_LOAD_TIME.set(load_time)
             logger.info(f"Model loaded successfully in {load_time:.3f}s")
@@ -99,12 +115,19 @@ class ModelInference:
         try:
             # Convert to numpy array and reshape for prediction
             features_array = np.array(features).reshape(1, -1)
-            
-            # Make prediction
-            prediction = self.model.predict(features_array)[0]
-            
-            # Ensure prediction is between 0 and 1
-            fraud_score = float(np.clip(prediction, 0.0, 1.0))
+
+            # Make prediction (raw score)
+            raw_score = self.model.predict(features_array)[0]
+
+            # Apply calibration if available (linear stretch)
+            if self.calibrator is not None:
+                scale = self.calibrator.get('scale', 1.0)
+                offset = self.calibrator.get('offset', 0.0)
+                calibrated = scale * raw_score + offset
+                fraud_score = float(np.clip(calibrated, 0.0, 1.0))
+                logger.debug(f"Raw score: {raw_score:.4f} -> Calibrated: {fraud_score:.4f}")
+            else:
+                fraud_score = float(np.clip(raw_score, 0.0, 1.0))
             
             # Record metrics
             latency = time.time() - start_time

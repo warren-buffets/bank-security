@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+import os
 from aiokafka import AIOKafkaConsumer
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -12,8 +13,9 @@ from .models import CaseCreate, CaseQueue, CaseStatusSQL, Decision
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# Configuration for Kafka (will come from config.py or environment variables)
-KAFKA_BOOTSTRAP_SERVERS = "kafka:9092"  # Assuming Kafka service name in docker-compose
+# Configuration for Kafka
+# Use port 29092 for internal Docker communication (PLAINTEXT listener)
+KAFKA_BOOTSTRAP_SERVERS = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "kafka:29092")
 KAFKA_TOPIC_DECISION_EVENTS = "decision_events"
 KAFKA_CONSUMER_GROUP_ID = "case-service-group"
 
@@ -59,7 +61,7 @@ async def consume_messages():
                             db.add(new_case)
                             await db.commit()
                             await db.refresh(new_case)
-                            logger.info(f"Created new case: {new_case.id} for event {new_case.event_id} with decision {new_case.decision}")
+                            logger.info(f"Created new case: {new_case.case_id} for event {new_case.event_id}")
                     else:
                         logger.info(f"Decision '{decision}' does not require case creation. Skipping.")
 

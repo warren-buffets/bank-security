@@ -1,5 +1,5 @@
 #!/bin/bash
-# FraudGuard AI - Database Helper Script
+# SafeGuard AI - Database Helper Script
 # Usage: ./scripts/db-helper.sh [command]
 
 set -e
@@ -10,7 +10,7 @@ cd "$PROJECT_ROOT"
 # Database connection
 DB_HOST="${POSTGRES_HOST:-localhost}"
 DB_PORT="${POSTGRES_PORT:-5432}"
-DB_NAME="${POSTGRES_DB:-antifraud}"
+DB_NAME="${POSTGRES_DB:-safeguard}"
 DB_USER="${POSTGRES_USER:-postgres}"
 DB_PASS="${POSTGRES_PASSWORD:-postgres_dev}"
 
@@ -230,7 +230,7 @@ reset_db() {
 
 # Show help
 help() {
-    echo "FraudGuard AI - Database Helper"
+    echo "SafeGuard AI - Database Helper"
     echo ""
     echo "Usage: $0 [command] [args]"
     echo ""

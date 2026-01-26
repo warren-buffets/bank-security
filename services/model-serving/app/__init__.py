@@ -1,3 +1,3 @@
-"""FraudGuard Model Serving Service."""
+"""SafeGuard Model Serving Service."""
 
 __version__ = "1.0.0"

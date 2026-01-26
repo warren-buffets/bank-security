@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: fraudguard
+  name: safeguard
   labels:
-    app.kubernetes.io/name: fraudguard
-    app.kubernetes.io/part-of: fraudguard-ai
+    app.kubernetes.io/name: safeguard
+    app.kubernetes.io/part-of: safeguard-ai

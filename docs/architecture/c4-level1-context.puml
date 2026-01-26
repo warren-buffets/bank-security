@@ -1,0 +1,37 @@
+@startuml SafeGuard Context Diagram
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+LAYOUT_WITH_LEGEND()
+
+title SafeGuard Financial - Diagramme de Contexte (C4 Level 1)
+
+Person(alice, "Alice", "Analyste Fraude", "Analyse et valide les alertes de fraude")
+Person(marc, "Marc", "Ops/IT", "Supervise la performance du système")
+Person(kumar, "Kumar", "RSSI/Auditeur", "Vérifie la conformité et les logs")
+
+System(safeguard, "SafeGuard Financial", "Système de détection de fraude en temps réel combinant règles métier et ML")
+
+System_Ext(psp, "PSP", "Payment Service Provider", "Envoie les transactions à analyser")
+System_Ext(bank_core, "Core Banking", "Système bancaire principal", "Reçoit les décisions APPROVE/DENY/REVIEW")
+System_Ext(notification, "Service Notification", "Envoie SMS/Email/Push pour SCA")
+
+Rel(psp, safeguard, "Envoie transaction", "REST API /v1/score")
+Rel(safeguard, bank_core, "Retourne décision", "APPROVE/DENY/REVIEW + score")
+Rel(safeguard, notification, "Déclenche SCA", "OTP/Biometric/Push")
+
+Rel(alice, safeguard, "Review alertes", "Case Management UI (Streamlit)")
+Rel(marc, safeguard, "Monitoring", "Grafana dashboards")
+Rel(kumar, safeguard, "Audit compliance", "Export logs HMAC signés")
+
+note right of safeguard
+  **Capacités:**
+  - Score de risque ML (LightGBM)
+  - Règles métier déterministes
+  - SCA dynamique (PSD2)
+  - Logs immuables HMAC-SHA256
+  - Anonymisation RGPD (90j)
+  - Latence p95: 10s (objectif <200ms)
+  - Throughput: ~70 req/s
+end note
+
+@enduml

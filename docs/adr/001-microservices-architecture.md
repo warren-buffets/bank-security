@@ -5,7 +5,7 @@
 
 ## Contexte
 
-FraudGuard nécessite de combiner plusieurs capacités distinctes :
+SafeGuard nécessite de combiner plusieurs capacités distinctes :
 - **Scoring ML** : Prédiction par modèle LightGBM
 - **Règles métier** : Moteur de règles rapide
 - **Orchestration** : Coordination et décision finale

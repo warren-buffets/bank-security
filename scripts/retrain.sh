@@ -1,5 +1,5 @@
 #!/bin/bash
-# FraudGuard AI - Model Retraining Script
+# SafeGuard AI - Model Retraining Script
 # Usage: ./scripts/retrain.sh [--deploy]
 
 set -e
@@ -27,7 +27,7 @@ BACKUP_DIR="artifacts/models/backups"
 
 echo ""
 echo -e "${CYAN}╔════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${CYAN}║         FRAUDGUARD AI - MODEL RETRAINING PIPELINE          ║${NC}"
+echo -e "${CYAN}║         SAFEGUARD AI - MODEL RETRAINING PIPELINE          ║${NC}"
 echo -e "${CYAN}╚════════════════════════════════════════════════════════════╝${NC}"
 echo ""
 
@@ -107,9 +107,9 @@ if [ "$DEPLOY" = "--deploy" ]; then
     log_info "Step 5/5: Deploying new model..."
 
     # Check if model-serving is running
-    if docker ps | grep -q "antifraud-model-serving"; then
+    if docker ps | grep -q "safeguard-model-serving"; then
         log_info "Restarting model-serving container..."
-        docker restart antifraud-model-serving
+        docker restart safeguard-model-serving
 
         # Wait for health check
         sleep 5

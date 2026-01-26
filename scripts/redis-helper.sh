@@ -1,12 +1,12 @@
 #!/bin/bash
-# FraudGuard AI - Redis Helper Script
+# SafeGuard AI - Redis Helper Script
 # Usage: ./scripts/redis-helper.sh [command]
 
 set -e
 
 REDIS_HOST="${REDIS_HOST:-localhost}"
 REDIS_PORT="${REDIS_PORT:-6379}"
-REDIS_CONTAINER="${REDIS_CONTAINER:-antifraud-redis}"
+REDIS_CONTAINER="${REDIS_CONTAINER:-safeguard-redis}"
 
 # Colors
 RED='\033[0;31m'
@@ -181,7 +181,7 @@ slowlog() {
 
 # Show help
 help() {
-    echo "FraudGuard AI - Redis Helper"
+    echo "SafeGuard AI - Redis Helper"
     echo ""
     echo "Usage: $0 [command] [args]"
     echo ""
@@ -197,7 +197,7 @@ help() {
     echo "  delete_key [key]     Delete single key"
     echo "  delete_pattern [p]   Delete by pattern"
     echo ""
-    echo "FraudGuard Specific:"
+    echo "SafeGuard Specific:"
     echo "  idempotency_keys     List idempotency keys"
     echo "  rule_cache           List rule cache"
     echo "  feature_cache        List feature cache"

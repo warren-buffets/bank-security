@@ -20,9 +20,9 @@ class Config:
     # PostgreSQL
     POSTGRES_HOST = os.getenv("POSTGRES_HOST", "localhost")
     POSTGRES_PORT = int(os.getenv("POSTGRES_PORT", "5432"))
-    POSTGRES_DB = os.getenv("POSTGRES_DB", "fraudguard")
-    POSTGRES_USER = os.getenv("POSTGRES_USER", "fraudguard")
-    POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "fraudguard")
+    POSTGRES_DB = os.getenv("POSTGRES_DB", "safeguard")
+    POSTGRES_USER = os.getenv("POSTGRES_USER", "safeguard")
+    POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "safeguard")
     
     @property
     def postgres_dsn(self) -> str:

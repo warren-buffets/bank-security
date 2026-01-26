@@ -1,7 +1,7 @@
-# FraudGuard AI - Six-Pager Technique
+# SafeGuard AI - Six-Pager Technique
 
-**Version** : 1.0
-**Date** : Janvier 2025
+**Version** : 1.1
+**Date** : Janvier 2026
 **Équipe** : Warren Buffets
 **Contact** : virgile.ader@epitech.digital
 
@@ -18,7 +18,7 @@ Les banques et fintechs perdent **milliards d'euros annuellement** à cause de l
 
 ### Solution Proposée
 
-**FraudGuard AI** est un moteur de détection de fraude **temps réel** combinant :
+**SafeGuard AI** est un moteur de détection de fraude **temps réel** combinant :
 1. **Machine Learning** (LightGBM) : Détection de patterns complexes
 2. **Rules Engine** (DSL custom) : Logique métier explicable
 3. **Architecture microservices** : Scalabilité et résilience
@@ -32,7 +32,7 @@ Les banques et fintechs perdent **milliards d'euros annuellement** à cause de l
 - ✅ Modèle ML LightGBM entraîné sur Kaggle Credit Card Fraud (1.8M transactions)
 - ✅ Moteur de règles métier (10+ règles)
 - ✅ API REST avec idempotence
-- ✅ Feature engineering (velocity, géolocalisation IP)
+- ✅ Feature engineering (velocity via Redis, géolocalisation IP)
 
 **Hors scope MVP** :
 - ❌ Interface UI analystes (Phase V1)
@@ -41,7 +41,7 @@ Les banques et fintechs perdent **milliards d'euros annuellement** à cause de l
 
 ### Résultats Attendus
 
-| Métrique | Baseline (Rules) | Objectif FraudGuard | Impact |
+| Métrique | Baseline (Rules) | Objectif SafeGuard | Impact |
 |----------|------------------|---------------------|--------|
 | **Taux de détection** (Recall) | 75% | 94% | +19% fraudes détectées |
 | **Faux positifs** (FPR) | 3-5% | < 2% | -50% friction client |
@@ -120,6 +120,7 @@ Les banques et fintechs perdent **milliards d'euros annuellement** à cause de l
            ┌─────────────────────────┐
            │   Decision Engine       │  ← Point d'entrée API
            │   (FastAPI, Port 8000)  │     POST /v1/score
+           │   + Velocity Tracker    │     (calcul vélocité)
            └────────┬────────────────┘
                     │
         ┌───────────┴───────────┐
@@ -128,14 +129,14 @@ Les banques et fintechs perdent **milliards d'euros annuellement** à cause de l
 ┌──────────────┐       ┌───────────────┐
 │ Model Serving│       │ Rules Service │
 │ (LightGBM)   │       │ (DSL Engine)  │
-│  Port 8001   │       │  Port 8002    │
-└──────┬───────┘       └───────┬───────┘
+│  Port 8001   │       │  Port 8003    │  ← Reçoit les données
+└──────┬───────┘       └───────┬───────┘    de vélocité
        │                       │
        │       ┌───────────────┘
        │       │
        ▼       ▼
     ┌─────────────┐
-    │  Redis      │  ← Idempotence, Cache, Velocity
+    │  Redis      │  ← Idempotence, Cache, Velocity (ZADD/ZCARD)
     └─────────────┘
            │
            ▼
@@ -146,7 +147,7 @@ Les banques et fintechs perdent **milliards d'euros annuellement** à cause de l
            ▼
     ┌─────────────┐       ┌─────────────┐
     │ Case Service│──────▶│ PostgreSQL  │
-    │  Port 8003  │       │             │
+    │  Port 8002  │       │             │
     └─────────────┘       └─────────────┘
 ```
 
@@ -161,9 +162,10 @@ Les banques et fintechs perdent **milliards d'euros annuellement** à cause de l
 
 2. Decision Engine
    ├─ Check idempotence (Redis) → Si duplicate, retourner résultat existant
+   ├─ Calcul velocity (Redis ZADD/ZCARD) → tx_count_1h, tx_count_24h, amount_sum_24h
    ├─ Appel parallèle Model + Rules (asyncio.gather)
    │   ├─ Model Serving: feature engineering + LightGBM → score 0.12
-   │   └─ Rules Service: évaluation règles → score 0.05
+   │   └─ Rules Service: évaluation règles + vélocité → score 0.05
    ├─ Combine scores: (0.7 * 0.12) + (0.3 * 0.05) = 0.099
    ├─ Threshold: 0.099 < 0.3 → ALLOW
    ├─ Store decision (Redis 24h TTL)
@@ -214,8 +216,10 @@ features = [
     # Temporal
     "hour_of_day", "day_of_week", "is_weekend",
 
-    # Velocity (Redis)
-    "tx_count_24h", "amount_sum_24h", "amount_sum_1h",
+    # Velocity (Redis - calculé en temps réel)
+    "tx_count_1h",      # Transactions dans la dernière heure
+    "tx_count_24h",     # Transactions dans les 24 dernières heures
+    "amount_sum_24h",   # Montant cumulé sur 24h
 
     # Géolocalisation IP (voir IP_GEOLOCATION.md)
     "ip_country", "ip_region", "ip_asn",
@@ -229,6 +233,34 @@ features = [
     "tx_count_total", "avg_amount_user", "first_seen_merchant"
 ]
 ```
+
+**Velocity Tracking (Redis Sorted Sets)** :
+
+Le système calcule la vélocité de chaque utilisateur en temps réel via Redis :
+
+```python
+# Architecture Redis pour la vélocité
+# Clé : velocity:{user_id}:tx
+# Structure : Sorted Set avec timestamp comme score
+
+# Enregistrement d'une transaction
+ZADD velocity:user_123:tx {timestamp} {tx_id}
+
+# Nettoyage des anciennes transactions (> 24h)
+ZREMRANGEBYSCORE velocity:user_123:tx 0 {timestamp - 86400}
+
+# Comptage transactions dernière heure
+ZCOUNT velocity:user_123:tx {timestamp - 3600} +inf
+
+# Comptage transactions 24h
+ZCARD velocity:user_123:tx
+```
+
+**Performance** : ~1-2ms par requête vélocité (Redis latence)
+
+**Règles de vélocité actives** :
+- `velocity_1h() > 5` → High Velocity (review)
+- `velocity_1h() > 10` → Extreme Velocity (deny)
 
 **Pipeline** :
 
@@ -255,7 +287,10 @@ Raw Transaction
 
 **Stockage** :
 
-- **Redis** : Idempotence (24h TTL), velocity (24h TTL), blacklist
+- **Redis** :
+  - Idempotence (24h TTL)
+  - Velocity par utilisateur (Sorted Sets, 24h TTL)
+  - Blacklist (IP, cartes)
 - **Kafka** : Événements (retention 7 jours)
 - **PostgreSQL** : Cas de fraude, historique décisions (90 jours)
 
@@ -299,6 +334,11 @@ http_errors_total (rate)
 # ML
 fraud_score_distribution (histogram)
 model_auc_score (gauge, calculé daily)
+
+# Velocity
+velocity_tracker_latency_seconds (histogram)
+velocity_high_alert_total (counter)  # tx_count_1h > 5
+velocity_extreme_alert_total (counter)  # tx_count_1h > 10
 ```
 
 **Logs** :
@@ -386,10 +426,12 @@ Détails : [ADR-001](adr/001-microservices-architecture.md)
 | **Logistic Regression** | 0.88 | 1ms | 1 MB | ❌ Pas assez précis |
 | **Random Forest** | 0.93 | 15ms | 500 MB | ❌ Trop lent |
 | **XGBoost** | 0.95 | 8ms | 50 MB | ✅ Bon mais lourd |
-| **LightGBM** ✅ | 0.94 | 5ms | 30 MB | ✅ **Choisi** |
+| **LightGBM** ✅ | 0.996 | 5ms | 350 KB | ✅ **Choisi** |
 | **Neural Network** | 0.94 | 20ms | 100 MB | ❌ Trop lent |
 
 **Choix** : **LightGBM** = meilleur compromis précision/latence
+
+**⚠️ ATTENTION - Dataset actuel** : Le modèle est entraîné sur Kaggle (kartik2112) qui présente un **biais sur les montants** : toute transaction > 300€ est considérée suspecte. Voir [SIX_PAGER_ML_MODEL.md](SIX_PAGER_ML_MODEL.md) pour détails et recommandation de changer vers IEEE-CIS.
 
 ### Cache (Idempotence)
 
@@ -424,6 +466,7 @@ Détails : [IP_GEOLOCATION.md](IP_GEOLOCATION.md)
 | **Redis down** | Moyen | Élevé | Redis Cluster (3 nodes), fallback mode |
 | **Kafka lag** | Faible | Moyen | Monitoring lag, scale consumers |
 | **Model drift** | Élevé | Élevé | AUC monitoring, retrain automatique |
+| **Dataset bias (Kaggle)** | **Actuel** | **Critique** | **Changer vers IEEE-CIS (voir SIX_PAGER_ML_MODEL.md)** |
 | **Latence dégradée** | Moyen | Élevé | Circuit breaker, timeout strict (50ms) |
 | **PostgreSQL bottleneck** | Faible | Moyen | Read replicas, sharding si > 1M cas |
 
@@ -447,8 +490,8 @@ Détails : [IP_GEOLOCATION.md](IP_GEOLOCATION.md)
 1. **Model Serving** : CPU-bound (inference)
    - **Solution** : Scale à 5+ pods
 
-2. **Redis** : Memory-bound (velocity checks)
-   - **Solution** : Sharding par tenant_id
+2. **Redis** : Memory-bound (velocity checks via ZADD/ZCARD)
+   - **Solution** : Sharding par user_id, TTL automatique 24h
 
 3. **PostgreSQL** : Write-bound (cas de fraude)
    - **Solution** : Batch inserts, async workers
@@ -516,6 +559,7 @@ decision = "DENY"
 - ✅ Model Serving (LightGBM)
 - ✅ Rules Service (DSL engine)
 - ✅ Idempotence (Redis)
+- ✅ Velocity Tracking (Redis Sorted Sets)
 - ✅ Feature engineering
 
 #### Phase 2 : ML Training & Tuning (Semaine 5-6)

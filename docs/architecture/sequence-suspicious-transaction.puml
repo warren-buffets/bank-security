@@ -1,0 +1,86 @@
+@startuml Transaction Suspecte - Séquence
+!theme plain
+
+title SafeGuard - Traitement d'une Transaction Suspecte
+
+actor "PSP" as PSP
+participant "Decision Engine" as DE
+participant "Model Serving" as ML
+participant "Rules Service" as Rules
+database "Redis" as Redis
+database "PostgreSQL" as PG
+queue "Kafka" as Kafka
+participant "Case Service" as Cases
+actor "Alice (Analyste)" as Alice
+
+== 1. Réception Transaction ==
+PSP -> DE: POST /v1/score\n{"amount": 9500, "merchant": "crypto.ru", ...}
+activate DE
+
+== 2. Velocity Tracking ==
+DE -> Redis: GET velocity:user_123
+Redis --> DE: {"tx_1h": 1, "tx_24h": 3, "amount_24h": 12000}
+note right: Détection pattern\nanormal de dépenses
+
+== 3. Scoring Parallèle ==
+DE -> ML: POST /predict (parallel)
+activate ML
+DE -> Rules: POST /evaluate (parallel)
+activate Rules
+
+ML -> ML: Feature engineering\n- Géolocalisation IP (RU)\n- Montant normalisé: 95%ile\n- Distance: 2500 km vs domicile
+ML --> DE: {"score": 0.92, "top_features": [...]}
+deactivate ML
+
+Rules -> PG: SELECT * FROM rules WHERE active=true
+PG --> Rules: 11 règles
+Rules -> Rules: Évaluation:\n✓ Montant > 5000€\n✓ Pays à risque (RU)\n✓ Merchant crypto
+Rules --> DE: {"matched_rules": ["HIGH_AMOUNT", "RISKY_COUNTRY"],\n"should_deny": true}
+deactivate Rules
+
+== 4. Fusion et Décision ==
+DE -> DE: Decision Logic:\n- ML score: 0.92 (TRÈS ÉLEVÉ)\n- Rules: DENY recommandé\n→ Décision: DENY
+
+== 5. SCA Dynamique (PSD2) ==
+DE -> DE: determine_sca_level(score=0.92, amount=9500)
+note right: Score > 0.9 + montant > 10k\n→ SCA: HARDWARE_TOKEN
+
+DE -> PG: INSERT INTO sca_challenges\n(user_id, risk_score, challenge_type)\nVALUES ('u123', 0.92, 'HARDWARE_TOKEN')
+PG --> DE: challenge_id: 789
+
+== 6. Audit Log Immuable ==
+DE -> DE: create_audit_entry():\n- HMAC-SHA256 signature\n- Timestamp, actor, action
+DE -> PG: INSERT INTO audit_logs\n(actor, action, after, signature)\nVALUES ('decision-engine', 'SCORE_TRANSACTION', {...}, 0xabcd...)
+note right: WORM: modification\net suppression bloquées
+
+== 7. DPIA Logging (RGPD) ==
+DE -> PG: INSERT INTO dpia_logs\n(event, details)\nVALUES ('SCA_TRIGGERED', {...})
+
+== 8. Diffusion Asynchrone ==
+DE -> Kafka: Publish to 'fraud-results'\n{"event_id": "evt_001", "decision": "DENY", "score": 0.92, ...}
+note right: Non-bloquant,\nlatency < 100ms
+
+DE --> PSP: HTTP 200\n{"decision": "DENY",\n"score": 0.92,\n"sca_challenge": {...},\n"latency_ms": 87}
+deactivate DE
+
+== 9. Case Management ==
+Kafka -> Cases: Consume 'fraud-results'
+activate Cases
+Cases -> PG: INSERT INTO cases\n(event_id, score, decision, status)\nVALUES ('evt_001', 0.92, 'DENY', 'Pending Review')
+deactivate Cases
+
+== 10. Review Analyste ==
+Alice -> Cases: GET /cases?queue=high_risk
+Cases -> PG: SELECT * FROM cases\nWHERE score >= 0.7 AND status='Pending Review'\nORDER BY score DESC
+PG --> Cases: [{"event_id": "evt_001", "score": 0.92, ...}]
+Cases --> Alice: Affiche dans queue 🔴 High Risk
+
+Alice -> Alice: Analyse contexte:\n- Merchant suspect\n- Pays à risque\n- Montant inhabituel
+Alice -> Cases: POST /cases/evt_001/review\n{"action": "CONFIRM_FRAUD"}
+
+Cases -> PG: UPDATE cases\nSET status='Confirmed Fraud', reviewed_by='alice'\nWHERE event_id='evt_001'
+
+Cases -> Kafka: Publish to 'fraud-feedback'\n{"event_id": "evt_001", "label": "fraud", "analyst": "alice"}
+note right: Feedback pour\nréentraînement ML
+
+@enduml

@@ -1,8 +1,8 @@
-# Guide Rapide - FraudGuard AI
+# Guide Rapide - SafeGuard AI
 
 ## 🎯 En 3 minutes
 
-**FraudGuard AI** détecte la fraude sur les paiements par carte en **< 100ms** avec **94% de précision** et **< 2% de faux positifs**.
+**SafeGuard AI** détecte la fraude sur les paiements par carte en **< 100ms** avec **94% de précision** et **< 2% de faux positifs**.
 
 ---
 
