@@ -39,5 +39,14 @@ logs/
 # OS
 .DS_Store
 
+# AI Tools (local only)
+.claude/
+CLAUDE.md
 .gemini/
+.cursor/
+.copilot/
+.ai/
 gha-creds-*.json
+
+# Kaggle
+.kaggle/
