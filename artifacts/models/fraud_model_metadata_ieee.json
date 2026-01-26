@@ -1,0 +1,81 @@
+{
+  "model_version": "fraud_lgbm_ieee_v2_calibrated",
+  "trained_at": "2026-01-23T03:20:03.914984",
+  "dataset": "ieee-cis-fraud-detection",
+  "n_samples": 590540,
+  "n_train": 472432,
+  "n_test": 118108,
+  "fraud_rate": 0.03499000914417313,
+  "auc_score": 0.8231086605081628,
+  "auc_score_full": 0.9231355042978457,
+  "calibration": {
+    "method": "linear_stretch",
+    "scale": 1.5169071440607569,
+    "offset": -0.2854180864740755,
+    "calibrator_file": "score_calibrator.pkl"
+  },
+  "feature_names": [
+    "amount",
+    "trans_hour",
+    "trans_day",
+    "merchant_mcc",
+    "card_type",
+    "channel",
+    "is_international",
+    "is_night",
+    "is_weekend",
+    "amount_category",
+    "distance_category",
+    "city_pop"
+  ],
+  "feature_importance": [
+    {
+      "feature": "amount",
+      "importance": 394475.33403015137
+    },
+    {
+      "feature": "city_pop",
+      "importance": 251011.8413848877
+    },
+    {
+      "feature": "card_type",
+      "importance": 109276.40375709534
+    },
+    {
+      "feature": "merchant_mcc",
+      "importance": 86834.27642822266
+    },
+    {
+      "feature": "channel",
+      "importance": 79794.01305389404
+    },
+    {
+      "feature": "trans_hour",
+      "importance": 73186.42157745361
+    },
+    {
+      "feature": "is_international",
+      "importance": 36034.56314086914
+    },
+    {
+      "feature": "trans_day",
+      "importance": 29970.712131500244
+    },
+    {
+      "feature": "distance_category",
+      "importance": 14213.409572601318
+    },
+    {
+      "feature": "amount_category",
+      "importance": 10198.56430053711
+    },
+    {
+      "feature": "is_night",
+      "importance": 3157.0933990478516
+    },
+    {
+      "feature": "is_weekend",
+      "importance": 768.2520027160645
+    }
+  ]
+}
