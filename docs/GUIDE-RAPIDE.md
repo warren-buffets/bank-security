@@ -1,4 +1,4 @@
-# Guide Rapide - SafeGuard AI
+﻿# Guide Rapide - SafeGuard AI
 
 ## 🎯 En 3 minutes
 
@@ -112,10 +112,10 @@ cd bank-security
 cp .env.example .env
 
 # Lance infrastructure
-make up
+docker compose up -d
 
 # Vérifie santé
-make health
+docker compose ps
 ```
 
 **Services disponibles** :
@@ -242,4 +242,5 @@ R : Oui, SCA natif + exemptions TRA
 - [ ] Détection drift
 
 **Besoin d'aide ?** Voir [ARCHITECTURE.md](ARCHITECTURE.md) ou [FLUX-DONNEES.md](FLUX-DONNEES.md)
+
 

@@ -1,4 +1,4 @@
-# SafeGuard - Détection de Fraude Bancaire Temps Réel
+﻿# SafeGuard - Détection de Fraude Bancaire Temps Réel
 
 > **Protégez chaque transaction. En un clin d'oeil.**
 
@@ -27,49 +27,99 @@
 
 ## Démarrage Rapide
 
+Objectif: **démarrer vite depuis VS Code**. Sur Windows/PowerShell, `make` n'est pas nécessaire.
+
 ### Prérequis
 
-- Docker & Docker Compose
-- Python 3.11+
-- Dataset IEEE-CIS (optionnel pour training)
+- Docker Desktop lancé
+- Docker Compose (commande `docker compose`)
+- (Optionnel) Python 3.11+ pour scripts/tests locaux
 
-### Installation
+### Windows / PowerShell (recommandé)
 
-```bash
-# 1. Cloner le repo
-git clone <repo-url>
-cd bank-security
+#### 1) Démarrer les services
 
-# 2. Configurer l'environnement
-cp .env.example .env
-
-# 3. Démarrer les services
-docker-compose up -d
-
-# 4. Appliquer les migrations
-for f in platform/postgres/migrations/V*.sql; do
-  docker exec -i safeguard-postgres psql -U postgres -d safeguard < "$f"
-done
-
-# 5. Vérifier la santé
-curl http://localhost:8000/health
+```powershell
+docker compose up -d
 ```
 
-### Services
+#### 2) Premiére fois seulement: base + migrations
 
-| Service | Port | Description |
-|---------|------|-------------|
-| Decision Engine | 8000 | Orchestrateur principal |
-| Model Serving | 8001 | Inférence ML (LightGBM) |
-| Rules Service | 8003 | Moteur de règles |
-| Case Service | 8002 | Gestion des cas |
-| PostgreSQL | 5432 | Base de données |
-| Redis | 6379 | Cache & idempotence |
-| Kafka | 9092 | Event streaming |
-| Prometheus | 9090 | Métriques |
-| Grafana | 3000 | Dashboards |
+```powershell
+docker compose exec -T postgres psql -U postgres -d postgres -c "DO $$ BEGIN IF NOT EXISTS (SELECT FROM pg_database WHERE datname = 'safeguard') THEN CREATE DATABASE safeguard; END IF; END $$;"
+$files = Get-ChildItem platform/postgres/migrations/*.sql | Sort-Object Name
+foreach ($f in $files) {
+  docker compose exec -T postgres psql -U postgres -d safeguard -f "/migrations/$($f.Name)"
+}
+```
 
----
+#### 3) Vérifier que l'API répond
+
+```powershell
+Invoke-RestMethod http://localhost:8000/health
+```
+
+#### 4) Démo rapide (PowerShell natif)
+
+```powershell
+$body = @{
+  event_id = "demo-001"
+  amount = 9500
+  currency = "EUR"
+  merchant = @{ id="m1"; name="CryptoExchange"; mcc="6211"; country="RU" }
+  card = @{ card_id="c1"; user_id="u1"; type="virtual" }
+  context = @{ ip="185.220.101.1"; channel="web" }
+} | ConvertTo-Json -Depth 5
+
+Invoke-RestMethod -Method Post `
+  -Uri "http://localhost:8000/v1/score" `
+  -ContentType "application/json" `
+  -Body $body
+```
+
+### Linux / macOS (bash)
+
+```bash
+docker compose up -d
+docker compose exec -T postgres psql -U postgres -d postgres -c "DO $$ BEGIN IF NOT EXISTS (SELECT FROM pg_database WHERE datname = 'safeguard') THEN CREATE DATABASE safeguard; END IF; END $$;"
+for f in platform/postgres/migrations/*.sql; do
+  docker compose exec -T postgres psql -U postgres -d safeguard -f "/migrations/$(basename "$f")"
+done
+curl -s http://localhost:8000/health
+```
+
+### URLs utiles
+
+- API (decision-engine): http://localhost:8000
+- Model Serving: http://localhost:8001
+- Rules Service: http://localhost:8003
+- Grafana: http://localhost:3000 (admin / admin)
+- Prometheus: http://localhost:9090
+
+### Dépannage rapide (PowerShell)
+
+```powershell
+docker compose ps
+docker compose logs -f decision-engine
+docker compose logs -f rules-service
+docker compose logs -f model-serving
+```
+
+> `make` reste possible via Git Bash / WSL, mais n'est pas nécessaire sur Windows.
+
+
+### Quick Start avec `make` (optionnel)
+
+Si tu utilises **Git Bash / WSL** (ou si `make` est installé), tu peux lancer le projet avec des alias courts :
+
+```bash
+make setup
+make demo
+```
+
+- Sur Windows/PowerShell, `make` n'est généralement pas disponible par défaut.
+- La version PowerShell ci-dessus reste la voie la plus simple.
+- Détails des commandes: `docs/MAKEFILE_GUIDE.md`
 
 ## Tester l'API
 
@@ -332,4 +382,17 @@ Contact : virgile.ader@epitech.digital
 ---
 
 **SafeGuard** - Détection de fraude bancaire temps réel
+
+
+
+
+
+
+
+
+
+
+
+
+
 
