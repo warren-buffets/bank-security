@@ -188,6 +188,65 @@ curl -X POST http://localhost:8000/v1/score \
 
 ---
 
+
+## 🛡️ Générateur de fraudes – Intégration des features
+
+Le générateur de fraudes synthétiques produit des transactions complètes en instanciant chaque feature de manière **cohérente, contrôlée et scénarisée**, afin de simuler des comportements réels (légitimes et frauduleux) sans utiliser de données réelles.
+
+### 🔁 Rôle du générateur
+- **Simuler** des transactions bancaires réalistes pour l’entraînement ML
+- **Injecter** des patterns de fraude contrôlés (card testing, ATO, phishing, etc.)
+- **Tester** le Decision Engine SafeGuard en conditions proches du réel
+- **Équilibrer** distributions, corrélations et biais statistiques
+
+---
+
+### ⚙️ Génération des features
+Chaque transaction est générée selon 3 couches :
+
+#### 1. **Base transactionnelle (réalisme)**
+- `amount`, `amount_category`
+- `trans_hour`, `trans_day`, `is_night`, `is_weekend`
+- `merchant_mcc`, `channel`, `card_type`
+
+→ Assure une distribution proche du trafic réel.
+
+#### 2. **Contexte géographique et comportemental**
+- `is_international`
+- `distance_category`
+- `city_pop`
+
+→ Simule le déplacement, l’anomalie géographique et le risque contextuel.
+
+#### 3. **Injection de scénarios de fraude**
+Selon le scénario, certaines features sont **forcées ou corrélées** :
+
+| Scénario | Features impactées |
+|---------|--------------------|
+| card_testing | petits `amount`, répétitions, `channel=web`, `is_night=1` |
+| account_takeover | nouveau device, `distance_category=far`, `is_international=1` |
+| phishing | horaires atypiques, MCC risqués |
+| money_laundering | montants structurés, répétition, MCC spécifiques |
+| merchant_fraud | MCC ciblé, `channel=pos` |
+| chargeback_fraud | délai, montants moyens, e-commerce |
+
+---
+
+### ✅ Validation post-génération
+- **Contrôler** la cohérence feature ↔ scénario
+- **Dédupliquer** les transactions
+- **Vérifier** les distributions (pas de fuite de patterns)
+- **Garantir** la séparabilité fraude / légitime sans sur-apprentissage
+
+---
+
+### 🚀 Sortie
+Les features générées alimentent directement :
+- les modèles de détection de fraude,
+- les pipelines d’entraînement et de tests,
+- le Decision Engine SafeGuard (ALLOW / CHALLENGE / DENY),
+- les analyses de performance et de robustesse.
+
 ## Documentation
 
 | Document | Description |
@@ -273,3 +332,4 @@ Contact : virgile.ader@epitech.digital
 ---
 
 **SafeGuard** - Détection de fraude bancaire temps réel
+
